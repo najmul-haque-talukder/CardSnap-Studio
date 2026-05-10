@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -129,11 +130,8 @@ export default function TemplateEditorPage() {
       handleUpdate("backgroundImageUrl", url);
       toast({ title: "Background uploaded successfully" });
     } catch (err: any) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: err.message || "Ensure Storage is enabled and rules allow access."
+      errorEmitter.emit('permission-error', {
+        message: err.message || "Storage upload failed. Ensure Storage is enabled in Firebase Console."
       });
     } finally {
       setUploading(false);

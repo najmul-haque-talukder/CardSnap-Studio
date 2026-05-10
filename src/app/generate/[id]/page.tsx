@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -11,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Download, Camera, Loader2, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
 
@@ -39,7 +42,7 @@ export default function GeneratePage() {
         if (snapshot.exists()) {
           setTemplate(snapshot.data());
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
       } finally {
         setLoading(false);
@@ -58,9 +61,16 @@ export default function GeneratePage() {
   };
 
   const handleDownload = async () => {
-    if (canvasRef.current) {
+    if (canvasRef.current && id) {
       const docRef = doc(db, "templates", id as string);
-      updateDoc(docRef, { usageCount: increment(1) }).catch(console.error);
+      updateDoc(docRef, { usageCount: increment(1) })
+        .catch(async (err) => {
+          const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update'
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
       
       canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.png`);
       toast({ title: "Card generated!", description: "Check your downloads folder." });
@@ -201,10 +211,6 @@ export default function GeneratePage() {
                 <Download className="w-5 h-5" /> Download 4K PNG
               </Button>
             </div>
-            
-            <p className="text-xs text-center text-muted-foreground px-10">
-              * Your download will be a high-quality 4K (2000x2000px+) image suitable for printing.
-            </p>
           </div>
         </div>
       </main>

@@ -1,3 +1,4 @@
+
 'use client';
 
 // Your web app's Firebase configuration
