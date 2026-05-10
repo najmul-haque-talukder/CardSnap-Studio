@@ -1,0 +1,193 @@
+
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import dynamic from "next/dynamic";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft, Download, Upload, Camera, Loader2 } from "lucide-react";
+
+const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
+
+export default function GeneratePage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const canvasRef = useRef<any>(null);
+  
+  const [template, setTemplate] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState(1);
+  const [userPhotoUrl, setUserPhotoUrl] = useState<string>("");
+  const [formData, setFormData] = useState({
+    name: "",
+    designation: "",
+    session: ""
+  });
+
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      if (!id) return;
+      const docRef = doc(db, "templates", id as string);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        setTemplate(snapshot.data());
+      }
+      setLoading(false);
+    };
+    fetchTemplate();
+  }, [id]);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setUserPhotoUrl(url);
+    }
+  };
+
+  const handleDownload = () => {
+    if (canvasRef.current) {
+      canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.png`);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+
+  if (!template) return <div className="p-10 text-center">Template not found.</div>;
+
+  const canvasConfig = {
+    ...template,
+    nameConfig: { ...template.nameConfig, text: formData.name || "Your Name" },
+    designationConfig: { ...template.designationConfig, text: formData.designation || "Designation" },
+    sessionConfig: { ...template.sessionConfig, text: formData.session || "2023-24" }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <nav className="border-b border-border/50 p-4 sticky top-0 bg-background/80 backdrop-blur-md z-50">
+        <div className="container mx-auto flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
+            <ChevronLeft />
+          </Button>
+          <h1 className="font-bold text-lg">{template.title}</h1>
+        </div>
+      </nav>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          {/* Form Side */}
+          <div className={`w-full md:w-[350px] space-y-6 ${step === 2 ? "hidden md:block" : "block"}`}>
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">1</span>
+                Customize Details
+              </h2>
+              
+              <div className="space-y-2">
+                <Label>Your Photo (Required)</Label>
+                <div className="relative group aspect-square rounded-2xl border-2 border-dashed border-border bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center overflow-hidden">
+                  {userPhotoUrl ? (
+                    <img src={userPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <Camera className="w-10 h-10 text-muted-foreground mb-2" />
+                      <span className="text-xs text-muted-foreground">Click to upload or take photo</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    onChange={handlePhotoUpload}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="John Doe"
+                  className="rounded-xl h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="designation">Designation / Department</Label>
+                <Input
+                  id="designation"
+                  value={formData.designation}
+                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                  placeholder="Software Engineer"
+                  className="rounded-xl h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="session">Session / Batch</Label>
+                <Input
+                  id="session"
+                  value={formData.session}
+                  onChange={(e) => setFormData({ ...formData, session: e.target.value })}
+                  placeholder="2024-25"
+                  className="rounded-xl h-12"
+                />
+              </div>
+            </div>
+
+            <Button 
+              className="w-full h-14 rounded-xl text-lg font-bold gap-2 md:hidden" 
+              onClick={() => setStep(2)}
+              disabled={!userPhotoUrl || !formData.name}
+            >
+              Generate Card <ChevronLeft className="rotate-180" />
+            </Button>
+          </div>
+
+          {/* Preview Side */}
+          <div className={`flex-1 w-full space-y-6 ${step === 1 ? "hidden md:block" : "block"}`}>
+            <h2 className="text-xl font-bold hidden md:flex items-center gap-2">
+              <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">2</span>
+              Live Preview
+            </h2>
+            
+            <PhotoCardCanvas config={canvasConfig} userPhotoUrl={userPhotoUrl} ref={canvasRef} />
+
+            <div className="flex flex-col md:flex-row gap-4">
+              <Button 
+                variant="outline" 
+                className="flex-1 h-14 rounded-xl md:hidden" 
+                onClick={() => setStep(1)}
+              >
+                ← Back to Edit
+              </Button>
+              <Button 
+                className="flex-[2] h-14 rounded-xl text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/20"
+                onClick={handleDownload}
+                disabled={!userPhotoUrl || !formData.name}
+              >
+                <Download className="w-5 h-5" /> Download 4K PNG
+              </Button>
+            </div>
+            
+            <p className="text-xs text-center text-muted-foreground px-10">
+              * The preview above is low resolution. Your download will be a high-quality 4K (2000x2000px+) image.
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
