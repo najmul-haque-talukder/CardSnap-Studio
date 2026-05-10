@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, Layout } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
 
@@ -83,25 +85,30 @@ export default function TemplateEditorPage() {
     }
 
     const fetchData = async () => {
-      if (id === "new") {
-        setConfig(DEFAULT_CONFIG);
-      } else {
-        const docRef = doc(db, "templates", id as string);
-        const snapshot = await getDoc(docRef);
-        if (snapshot.exists()) {
-          setConfig({ ...DEFAULT_CONFIG, ...snapshot.data() });
+      try {
+        if (id === "new") {
+          setConfig(DEFAULT_CONFIG);
         } else {
-          router.push("/admin/dashboard");
+          const docRef = doc(db, "templates", id as string);
+          const snapshot = await getDoc(docRef);
+          if (snapshot.exists()) {
+            setConfig({ ...DEFAULT_CONFIG, ...snapshot.data() });
+          } else {
+            router.push("/admin/dashboard");
+          }
         }
+      } catch (err) {
+        toast({ title: "Failed to load template", variant: "destructive" });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     if (!userLoading && user) fetchData();
   }, [id, user, userLoading, router, db]);
 
   const handleUpdate = (path: string, value: any) => {
     setConfig((prev: any) => {
-      const next = { ...prev };
+      const next = JSON.parse(JSON.stringify(prev));
       const parts = path.split(".");
       let current = next;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -122,8 +129,8 @@ export default function TemplateEditorPage() {
       const url = await getDownloadURL(storageRef);
       handleUpdate("backgroundImageUrl", url);
       toast({ title: "Background uploaded" });
-    } catch (err) {
-      toast({ title: "Upload failed", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: "Ensure Firebase Storage is enabled and rules allow uploads.", variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -131,17 +138,24 @@ export default function TemplateEditorPage() {
 
   const handleSave = async (status: "draft" | "published") => {
     setSaving(true);
-    try {
-      const templateId = id === "new" ? doc(collection(db, "templates")).id : id as string;
-      const data = { ...config, status, updatedAt: serverTimestamp() };
-      await setDoc(doc(db, "templates", templateId), data, { merge: true });
-      toast({ title: "Template Saved Successfully" });
-      router.push("/admin/dashboard");
-    } catch (err: any) {
-      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const templateId = id === "new" ? doc(db, 'templates', 'temp').id : id as string;
+    const docRef = doc(db, "templates", templateId);
+    const data = { ...config, status, updatedAt: serverTimestamp() };
+
+    setDoc(docRef, data, { merge: true })
+      .then(() => {
+        toast({ title: "Template Saved Successfully" });
+        router.push("/admin/dashboard");
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'write',
+          requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => setSaving(false));
   };
 
   if (loading || userLoading || !config) return (
@@ -300,7 +314,7 @@ export default function TemplateEditorPage() {
                       <SelectContent>
                         <SelectItem value="normal">Normal</SelectItem>
                         <SelectItem value="bold">Bold</SelectItem>
-                        <SelectItem value="italic">Ialic</SelectItem>
+                        <SelectItem value="italic">Italic</SelectItem>
                         <SelectItem value="bold italic">Bold Italic</SelectItem>
                       </SelectContent>
                     </Select>
