@@ -19,6 +19,6 @@ export function initializeFirebase(): {
 
 export * from './provider';
 export * from './client-provider';
-export { useCollection } from './firestore/use-collection';
+export { useCollection, useMemoFirebase } from './firestore/use-collection';
 export { useDoc } from './firestore/use-doc';
 export { useUser } from './auth/use-user';

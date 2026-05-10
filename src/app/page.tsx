@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { collection, query, where, orderBy } from "firebase/firestore";
-import { useFirestore, useCollection } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,7 +27,7 @@ export default function HomePage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
   
-  const templatesQuery = useMemo(() => {
+  const templatesQuery = useMemoFirebase(() => {
     let q = query(collection(db, "templates"), where("status", "==", "published"));
     if (activeCategory !== "All") {
       q = query(q, where("category", "==", activeCategory.toLowerCase()));
@@ -41,13 +41,8 @@ export default function HomePage() {
     setCurrentYear(new Date().getFullYear());
   }, []);
 
-  const featuredTemplates = useMemo(() => 
-    templates?.filter(t => t.featured) || [], 
-  [templates]);
-
   return (
     <div className="min-h-screen pb-20">
-      {/* Hero Section */}
       <header className="relative py-24 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-primary/20 blur-[120px] rounded-full -z-10" />
         <div className="container mx-auto px-4 text-center">
@@ -75,7 +70,6 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Templates Grid */}
       <section className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold">
