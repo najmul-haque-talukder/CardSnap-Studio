@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
-import { useFirestore, useUser, useFirebaseApp } from "@/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useFirestore, useUser, useStorage } from "@/firebase";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,8 +69,7 @@ export default function TemplateEditorPage() {
   const { id } = useParams();
   const router = useRouter();
   const db = useFirestore();
-  const app = useFirebaseApp();
-  const storage = getStorage(app);
+  const storage = useStorage();
   const { user, loading: userLoading } = useUser();
   
   const [config, setConfig] = useState<any>(null);
@@ -133,24 +131,33 @@ export default function TemplateEditorPage() {
         handleUpdate("backgroundImageUrl", url);
         toast({ title: "Background uploaded successfully" });
       })
-      .catch(async (err) => {
-        errorEmitter.emit('permission-error', new Error(`Upload Failed: ${err.message}. Ensure Storage is enabled and Rules are set to public in Firebase Console.`));
+      .catch((err) => {
+        console.error(err);
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: "Ensure Firebase Storage is enabled and rules allow access."
+        });
       })
       .finally(() => setUploading(false));
   };
 
   const handleSave = async (status: "draft" | "published") => {
+    if (!user) {
+      toast({ title: "Please login first", variant: "destructive" });
+      return;
+    }
     setSaving(true);
-    const templateId = id === "new" ? doc(db, 'templates', 'temp').id.substring(0, 8) + Date.now() : id as string;
+    const templateId = id === "new" ? `tmp_${Date.now()}` : id as string;
     const docRef = doc(db, "templates", templateId);
-    const data = { ...config, status, updatedAt: serverTimestamp() };
+    const data = { ...config, id: templateId, status, updatedAt: serverTimestamp() };
 
     setDoc(docRef, data, { merge: true })
       .then(() => {
         toast({ title: "Template Saved Successfully" });
         router.push("/admin/dashboard");
       })
-      .catch(async (serverError) => {
+      .catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
