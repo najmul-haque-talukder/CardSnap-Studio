@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { collection, query, where } from "firebase/firestore";
 import { useFirestore, useCollection } from "@/firebase";
@@ -8,7 +8,6 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useMemo } from "react";
 
 interface Template {
   id: string;
@@ -20,12 +19,17 @@ interface Template {
 
 export default function HomePage() {
   const db = useFirestore();
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
   
   const templatesQuery = useMemo(() => {
     return query(collection(db, "templates"), where("status", "==", "published"));
   }, [db]);
 
   const { data: templates, loading } = useCollection<Template>(templatesQuery);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
 
   return (
     <div className="min-h-screen pb-20">
@@ -97,7 +101,7 @@ export default function HomePage() {
       </section>
 
       <footer className="mt-40 text-center text-sm text-muted-foreground">
-        &copy; {new Date().getFullYear()} CardSnap Studio. All rights reserved.
+        &copy; {currentYear ?? '...'} CardSnap Studio. All rights reserved.
       </footer>
     </div>
   );
