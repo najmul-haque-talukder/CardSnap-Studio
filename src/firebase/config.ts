@@ -1,6 +1,7 @@
 
 'use client';
 
+// Your web app's Firebase configuration
 export const firebaseConfig = {
   apiKey: "AIzaSyDzkS0w274reY0_t-z3jI0PwqdRB1Lh6E0",
   authDomain: "studio-2886237139-57166.firebaseapp.com",

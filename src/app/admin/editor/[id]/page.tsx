@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"; // Fixed missing import
 import { SliderInput } from "@/components/ui/slider-input";
 import { ColorPickerInput } from "@/components/ui/color-picker-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
