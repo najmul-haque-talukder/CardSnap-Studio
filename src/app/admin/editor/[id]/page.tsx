@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -96,8 +97,7 @@ export default function TemplateEditorPage() {
           }
         }
       } catch (err) {
-        console.error(err);
-        toast({ title: "Failed to load template", variant: "destructive" });
+        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -126,24 +126,20 @@ export default function TemplateEditorPage() {
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const storageRef = ref(storage, fileName);
     
-    try {
-      const uploadResult = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(uploadResult.ref);
-      handleUpdate("backgroundImageUrl", url);
-      toast({ title: "Background uploaded successfully" });
-    } catch (err: any) {
-      console.error("Storage upload error:", err);
-      toast({ 
-        variant: "destructive",
-        title: "Upload Failed", 
-        description: "Could not upload image. Please check your Firebase Storage Rules."
+    uploadBytes(storageRef, file)
+      .then(async (uploadResult) => {
+        const url = await getDownloadURL(uploadResult.ref);
+        handleUpdate("backgroundImageUrl", url);
+        toast({ title: "Background uploaded successfully" });
+      })
+      .catch((err: any) => {
+        errorEmitter.emit('permission-error', {
+          message: err.message || "Storage upload failed. Ensure 'Storage' is enabled in Firebase Console and rules allow writes."
+        });
+      })
+      .finally(() => {
+        setUploading(false);
       });
-      errorEmitter.emit('permission-error', {
-        message: err.message || "Storage upload failed."
-      });
-    } finally {
-      setUploading(false);
-    }
   };
 
   const handleSave = async (status: "draft" | "published") => {
@@ -167,7 +163,7 @@ export default function TemplateEditorPage() {
         toast({ title: "Template Saved Successfully" });
         router.push("/admin/dashboard");
       })
-      .catch(async (serverError) => {
+      .catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
@@ -374,11 +370,6 @@ export default function TemplateEditorPage() {
                 sessionConfig: { ...config.sessionConfig, text: "2024-2025" }
               }} 
             />
-            <div className="p-4 bg-muted/20 border border-border/50 rounded-2xl">
-              <p className="text-xs text-center text-muted-foreground">
-                Dummy data is used for preview. Changes are reflected instantly.
-              </p>
-            </div>
           </div>
         </div>
       </main>

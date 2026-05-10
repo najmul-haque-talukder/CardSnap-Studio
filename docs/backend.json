@@ -27,7 +27,7 @@
   },
   "firestore": {
     "/templates/{templateId}": {
-      "schema": "Template",
+      "schema": { "$ref": "#/entities/Template" },
       "description": "Collection of photocard templates."
     }
   }
