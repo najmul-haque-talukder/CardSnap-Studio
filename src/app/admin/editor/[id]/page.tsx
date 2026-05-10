@@ -14,7 +14,6 @@ import { SliderInput } from "@/components/ui/slider-input";
 import { ColorPickerInput } from "@/components/ui/color-picker-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -123,23 +122,22 @@ export default function TemplateEditorPage() {
     if (!file) return;
     setUploading(true);
     
-    const storageRef = ref(storage, `backgrounds/${Date.now()}_${file.name}`);
-    
-    uploadBytes(storageRef, file)
-      .then(async () => {
-        const url = await getDownloadURL(storageRef);
-        handleUpdate("backgroundImageUrl", url);
-        toast({ title: "Background uploaded successfully" });
-      })
-      .catch((err) => {
-        console.error(err);
-        toast({
-          variant: "destructive",
-          title: "Upload Failed",
-          description: "Check if Firebase Storage rules allow uploads."
-        });
-      })
-      .finally(() => setUploading(false));
+    try {
+      const storageRef = ref(storage, `backgrounds/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      handleUpdate("backgroundImageUrl", url);
+      toast({ title: "Background uploaded successfully" });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: err.message || "Ensure Storage is enabled and rules allow access."
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async (status: "draft" | "published") => {
@@ -157,7 +155,7 @@ export default function TemplateEditorPage() {
         toast({ title: "Template Saved Successfully" });
         router.push("/admin/dashboard");
       })
-      .catch((serverError) => {
+      .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
