@@ -123,22 +123,24 @@ export default function TemplateEditorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    try {
-      const storageRef = ref(storage, `backgrounds/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      handleUpdate("backgroundImageUrl", url);
-      toast({ title: "Background uploaded" });
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: "Ensure Firebase Storage is enabled and rules allow uploads.", variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
+    
+    const storageRef = ref(storage, `backgrounds/${Date.now()}_${file.name}`);
+    
+    uploadBytes(storageRef, file)
+      .then(async () => {
+        const url = await getDownloadURL(storageRef);
+        handleUpdate("backgroundImageUrl", url);
+        toast({ title: "Background uploaded successfully" });
+      })
+      .catch(async (err) => {
+        errorEmitter.emit('permission-error', new Error(`Upload Failed: ${err.message}. Ensure Storage is enabled in Firebase Console.`));
+      })
+      .finally(() => setUploading(false));
   };
 
   const handleSave = async (status: "draft" | "published") => {
     setSaving(true);
-    const templateId = id === "new" ? doc(db, 'templates', 'temp').id : id as string;
+    const templateId = id === "new" ? doc(db, 'templates', 'temp').id.substring(0, 8) + Date.now() : id as string;
     const docRef = doc(db, "templates", templateId);
     const data = { ...config, status, updatedAt: serverTimestamp() };
 
