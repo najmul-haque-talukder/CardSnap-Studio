@@ -1,21 +1,22 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, Download, Upload, Camera, Loader2 } from "lucide-react";
+import { ChevronLeft, Download, Camera, Loader2, Sparkles } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
 
 export default function GeneratePage() {
   const { id } = useParams();
   const router = useRouter();
+  const db = useFirestore();
   const canvasRef = useRef<any>(null);
   
   const [template, setTemplate] = useState<any>(null);
@@ -39,19 +40,25 @@ export default function GeneratePage() {
       setLoading(false);
     };
     fetchTemplate();
-  }, [id]);
+  }, [id, db]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setUserPhotoUrl(url);
+      toast({ title: "Photo attached!" });
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (canvasRef.current) {
+      // Analytics: Track usage in Firestore
+      const docRef = doc(db, "templates", id as string);
+      updateDoc(docRef, { usageCount: increment(1) });
+      
       canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.png`);
+      toast({ title: "Card generated!", description: "Check your downloads folder." });
     }
   };
 
@@ -61,7 +68,12 @@ export default function GeneratePage() {
     </div>
   );
 
-  if (!template) return <div className="p-10 text-center">Template not found.</div>;
+  if (!template) return (
+    <div className="p-10 text-center flex flex-col items-center gap-4">
+      <p className="text-muted-foreground">Template not found.</p>
+      <Button onClick={() => router.push("/")}>Return Home</Button>
+    </div>
+  );
 
   const canvasConfig = {
     ...template,
@@ -72,13 +84,19 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <nav className="border-b border-border/50 p-4 sticky top-0 bg-background/80 backdrop-blur-md z-50">
-        <div className="container mx-auto flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
-            <ChevronLeft />
-          </Button>
-          <h1 className="font-bold text-lg">{template.title}</h1>
+        <div className="container mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
+              <ChevronLeft />
+            </Button>
+            <h1 className="font-bold text-lg">{template.title}</h1>
+          </div>
+          {template.usageCount > 0 && (
+            <Badge variant="secondary" className="gap-1">
+              <Sparkles className="w-3 h-3 text-primary" /> {template.usageCount} generated
+            </Badge>
+          )}
         </div>
       </nav>
 
@@ -100,13 +118,12 @@ export default function GeneratePage() {
                   ) : (
                     <>
                       <Camera className="w-10 h-10 text-muted-foreground mb-2" />
-                      <span className="text-xs text-muted-foreground">Click to upload or take photo</span>
+                      <span className="text-xs text-muted-foreground">Click to upload photo</span>
                     </>
                   )}
                   <input
                     type="file"
                     accept="image/*"
-                    capture="user"
                     onChange={handlePhotoUpload}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
@@ -152,7 +169,7 @@ export default function GeneratePage() {
               onClick={() => setStep(2)}
               disabled={!userPhotoUrl || !formData.name}
             >
-              Generate Card <ChevronLeft className="rotate-180" />
+              Continue to Preview <ChevronLeft className="rotate-180" />
             </Button>
           </div>
 
@@ -171,7 +188,7 @@ export default function GeneratePage() {
                 className="flex-1 h-14 rounded-xl md:hidden" 
                 onClick={() => setStep(1)}
               >
-                ← Back to Edit
+                ← Edit Details
               </Button>
               <Button 
                 className="flex-[2] h-14 rounded-xl text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/20"
@@ -183,7 +200,7 @@ export default function GeneratePage() {
             </div>
             
             <p className="text-xs text-center text-muted-foreground px-10">
-              * The preview above is low resolution. Your download will be a high-quality 4K (2000x2000px+) image.
+              * Your download will be a high-quality 4K (2000x2000px+) image suitable for printing.
             </p>
           </div>
         </div>

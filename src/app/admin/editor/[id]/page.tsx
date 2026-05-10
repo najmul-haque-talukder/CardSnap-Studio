@@ -1,12 +1,10 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage, auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
+import { useFirestore, useAuth, useUser, useFirebaseApp } from "@/firebase";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +14,8 @@ import { ColorPickerInput } from "@/components/ui/color-picker-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, Layout } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
@@ -25,6 +24,8 @@ const DEFAULT_CONFIG = {
   title: "New Template",
   subtitle: "Event 2024",
   status: "draft",
+  category: "events",
+  featured: false,
   backgroundImageUrl: "https://picsum.photos/seed/bg/500/500",
   photoConfig: {
     shape: "circle",
@@ -64,15 +65,21 @@ const DEFAULT_CONFIG = {
 export default function TemplateEditorPage() {
   const { id } = useParams();
   const router = useRouter();
+  const db = useFirestore();
+  const app = useFirebaseApp();
+  const storage = getStorage(app);
+  const { user, loading: userLoading } = useUser();
+  
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) router.push("/admin/login");
-    });
+    if (!userLoading && !user) {
+      router.push("/admin/login");
+      return;
+    }
 
     const fetchData = async () => {
       if (id === "new") {
@@ -88,19 +95,20 @@ export default function TemplateEditorPage() {
       }
       setLoading(false);
     };
-    fetchData();
-    return () => unsub();
-  }, [id]);
+    if (!userLoading && user) fetchData();
+  }, [id, user, userLoading, router, db]);
 
   const handleUpdate = (path: string, value: any) => {
-    const newConfig = { ...config };
-    const parts = path.split(".");
-    let current = newConfig;
-    for (let i = 0; i < parts.length - 1; i++) {
-      current = current[parts[i]];
-    }
-    current[parts[parts.length - 1]] = value;
-    setConfig(newConfig);
+    setConfig((prev: any) => {
+      const next = { ...prev };
+      const parts = path.split(".");
+      let current = next;
+      for (let i = 0; i < parts.length - 1; i++) {
+        current = current[parts[i]];
+      }
+      current[parts[parts.length - 1]] = value;
+      return next;
+    });
   };
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,6 +120,7 @@ export default function TemplateEditorPage() {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       handleUpdate("backgroundImageUrl", url);
+      toast({ title: "Background uploaded" });
     } catch (err) {
       toast({ title: "Upload failed", variant: "destructive" });
     } finally {
@@ -120,21 +129,21 @@ export default function TemplateEditorPage() {
   };
 
   const handleSave = async (status: "draft" | "published") => {
-    setSaving(status === "published" ? true : false);
+    setSaving(true);
     try {
       const templateId = id === "new" ? doc(collection(db, "templates")).id : id as string;
       const data = { ...config, status, updatedAt: serverTimestamp() };
       await setDoc(doc(db, "templates", templateId), data, { merge: true });
       toast({ title: "Template Saved Successfully" });
       router.push("/admin/dashboard");
-    } catch (err) {
-      toast({ title: "Failed to save", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading || !config) return (
+  if (loading || userLoading || !config) return (
     <div className="flex items-center justify-center min-h-screen">
       <Loader2 className="w-8 h-8 animate-spin text-primary" />
     </div>
@@ -142,7 +151,6 @@ export default function TemplateEditorPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Editor Header */}
       <header className="border-b border-border/50 bg-card p-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
@@ -165,8 +173,7 @@ export default function TemplateEditorPage() {
       </header>
 
       <main className="flex-1 flex flex-col md:flex-row h-[calc(100vh-73px)] overflow-hidden">
-        {/* Left: Controls */}
-        <div className="w-full md:w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 scrollbar-thin scrollbar-thumb-primary/20">
+        <div className="w-full md:w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8">
           
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
@@ -182,6 +189,34 @@ export default function TemplateEditorPage() {
                 <Label>Subtitle (Public)</Label>
                 <Input value={config.subtitle} onChange={(e) => handleUpdate("subtitle", e.target.value)} className="rounded-xl" />
               </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select value={config.category} onValueChange={(val) => handleUpdate("category", val)}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="events">Events</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="academic">Academic</SelectItem>
+                      <SelectItem value="social">Social</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Featured</Label>
+                  <div className="flex items-center space-x-2 h-10 px-3 border rounded-xl bg-muted/20">
+                    <Switch 
+                      checked={config.featured} 
+                      onCheckedChange={(val) => handleUpdate("featured", val)}
+                    />
+                    <span className="text-xs font-medium">Highlight</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Background Image</Label>
                 <div className="relative h-24 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
@@ -193,7 +228,7 @@ export default function TemplateEditorPage() {
                   ) : (
                     <>
                       <Upload className="w-6 h-6 text-muted-foreground mb-1" />
-                      <span className="text-xs font-medium">Click to change background</span>
+                      <span className="text-xs font-medium">Change background</span>
                     </>
                   )}
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
@@ -293,12 +328,11 @@ export default function TemplateEditorPage() {
           </Tabs>
         </div>
 
-        {/* Right: Live Preview */}
         <div className="flex-1 bg-muted/10 flex items-center justify-center p-8 overflow-auto">
           <div className="space-y-6 w-full max-w-[500px]">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview (Real-time)</h3>
-              <Badge variant="outline" className="animate-pulse border-primary text-primary">Active Designer</Badge>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</h3>
+              <Badge variant="outline" className="border-primary text-primary">Designer Active</Badge>
             </div>
             <PhotoCardCanvas 
               config={{
@@ -310,8 +344,7 @@ export default function TemplateEditorPage() {
             />
             <div className="p-4 bg-muted/20 border border-border/50 rounded-2xl">
               <p className="text-xs text-center text-muted-foreground">
-                Your changes are reflected instantly. Drag sliders or change values to see updates. 
-                Dummy data is used for preview purposes.
+                Dummy data is used for preview. Changes are reflected instantly.
               </p>
             </div>
           </div>

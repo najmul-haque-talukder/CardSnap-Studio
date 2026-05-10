@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { useFirestore, useCollection } from "@/firebase";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sparkles, ArrowRight, Loader2, Star } from "lucide-react";
 import Image from "next/image";
 
 interface Template {
@@ -15,21 +16,34 @@ interface Template {
   subtitle: string;
   backgroundImageUrl: string;
   status: string;
+  category?: string;
+  featured?: boolean;
 }
+
+const CATEGORIES = ["All", "Events", "Professional", "Academic", "Social"];
 
 export default function HomePage() {
   const db = useFirestore();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState("All");
   
   const templatesQuery = useMemo(() => {
-    return query(collection(db, "templates"), where("status", "==", "published"));
-  }, [db]);
+    let q = query(collection(db, "templates"), where("status", "==", "published"));
+    if (activeCategory !== "All") {
+      q = query(q, where("category", "==", activeCategory.toLowerCase()));
+    }
+    return q;
+  }, [db, activeCategory]);
 
   const { data: templates, loading } = useCollection<Template>(templatesQuery);
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
+
+  const featuredTemplates = useMemo(() => 
+    templates?.filter(t => t.featured) || [], 
+  [templates]);
 
   return (
     <div className="min-h-screen pb-20">
@@ -46,13 +60,27 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
             Create high-quality 4K photocards for your events, sessions, or professional needs in seconds.
           </p>
+
+          <div className="flex justify-center mb-12">
+            <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-auto">
+              <TabsList className="bg-muted/50 rounded-full p-1 border border-border/50">
+                {CATEGORIES.map(cat => (
+                  <TabsTrigger key={cat} value={cat} className="rounded-full px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    {cat}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       </header>
 
       {/* Templates Grid */}
       <section className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold">Latest Templates</h2>
+          <h2 className="text-2xl font-bold">
+            {activeCategory === "All" ? "Latest Templates" : `${activeCategory} Templates`}
+          </h2>
           <Link href="/admin/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             Admin Access
           </Link>
@@ -79,11 +107,25 @@ export default function HomePage() {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {template.featured && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <Badge className="bg-yellow-500 text-black font-bold gap-1">
+                          <Star className="w-3 h-3 fill-current" /> Featured
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                   <CardContent className="p-6">
-                    <CardTitle className="text-xl mb-1 group-hover:text-primary transition-colors">
-                      {template.title}
-                    </CardTitle>
+                    <div className="flex items-start justify-between mb-1">
+                      <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                        {template.title}
+                      </CardTitle>
+                      {template.category && (
+                        <Badge variant="secondary" className="capitalize text-[10px] py-0">
+                          {template.category}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">{template.subtitle}</p>
                     <div className="mt-4 flex items-center gap-2 text-primary font-semibold text-sm opacity-0 translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 transition-all">
                       Customize now <ArrowRight className="w-4 h-4" />
@@ -95,7 +137,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border">
-            <p className="text-muted-foreground">No published templates yet.</p>
+            <p className="text-muted-foreground">No templates found in this category.</p>
           </div>
         )}
       </section>
