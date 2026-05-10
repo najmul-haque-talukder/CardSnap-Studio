@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -10,7 +9,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge"; // Fixed missing import
+import { Badge } from "@/components/ui/badge";
 import { SliderInput } from "@/components/ui/slider-input";
 import { ColorPickerInput } from "@/components/ui/color-picker-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -218,17 +217,16 @@ export default function TemplateEditorPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select value={config.category} onValueChange={(val) => handleUpdate("category", val)}>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="events">Events</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="academic">Academic</SelectItem>
-                      <SelectItem value="social">Social</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    value={config.category} 
+                    onChange={(e) => handleUpdate("category", e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="events">Events</option>
+                    <option value="professional">Professional</option>
+                    <option value="academic">Academic</option>
+                    <option value="social">Social</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label>Featured</Label>
@@ -317,17 +315,16 @@ export default function TemplateEditorPage() {
                   
                   <div className="space-y-2">
                     <Label>Font Style</Label>
-                    <Select value={config[`${layer}Config`].fontStyle} onValueChange={(val) => handleUpdate(`${layer}Config.fontStyle`, val)}>
-                      <SelectTrigger className="rounded-xl h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="bold">Bold</SelectItem>
-                        <SelectItem value="italic">Italic</SelectItem>
-                        <SelectItem value="bold italic">Bold Italic</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={config[`${layer}Config`].fontStyle} 
+                      onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)}
+                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="bold">Bold</option>
+                      <option value="italic">Italic</option>
+                      <option value="bold italic">Bold Italic</option>
+                    </select>
                   </div>
 
                   <div className="space-y-2">
