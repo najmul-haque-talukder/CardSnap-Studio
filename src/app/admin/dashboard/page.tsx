@@ -1,15 +1,14 @@
-
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import React, { useMemo } from "react";
+import { collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { useFirestore, useAuth, useCollection, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Template {
@@ -20,44 +19,46 @@ interface Template {
 }
 
 export default function AdminDashboard() {
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
+  const db = useFirestore();
+  const auth = useAuth();
   const router = useRouter();
+  const { user, loading: userLoading } = useUser();
+
+  const templatesQuery = useMemo(() => collection(db, "templates"), [db]);
+  const { data: templates, loading: templatesLoading } = useCollection<Template>(templatesQuery);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) router.push("/admin/login");
-    });
-    fetchTemplates();
-    return () => unsub();
-  }, []);
-
-  const fetchTemplates = async () => {
-    const snapshot = await getDocs(collection(db, "templates"));
-    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Template[];
-    setTemplates(items);
-    setLoading(false);
-  };
+    if (!userLoading && !user) {
+      router.push("/admin/login");
+    }
+  }, [user, userLoading, router]);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this template?")) {
-      await deleteDoc(doc(db, "templates", id));
-      setTemplates(templates.filter(t => t.id !== id));
+      deleteDoc(doc(db, "templates", id));
       toast({ title: "Template deleted" });
     }
   };
 
   const togglePublish = async (template: Template) => {
     const newStatus = template.status === "published" ? "draft" : "published";
-    await updateDoc(doc(db, "templates", template.id), { status: newStatus });
-    setTemplates(templates.map(t => t.id === template.id ? { ...t, status: newStatus } : t));
+    updateDoc(doc(db, "templates", template.id), { status: newStatus });
     toast({ title: `Template ${newStatus}` });
   };
 
   const handleLogout = () => {
-    auth.signOut();
-    router.push("/admin/login");
+    auth.signOut().then(() => {
+      router.push("/admin/login");
+    });
   };
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -82,13 +83,13 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {loading ? (
+        {templatesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-2xl" />)}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {templates.map(template => (
+            {templates?.map(template => (
               <Card key={template.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-colors rounded-2xl">
                 <div className="aspect-video relative bg-muted">
                   <img src={template.backgroundImageUrl} alt={template.title} className="w-full h-full object-cover" />

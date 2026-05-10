@@ -1,14 +1,14 @@
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { collection, query, where } from "firebase/firestore";
+import { useFirestore, useCollection } from "@/firebase";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useMemo } from "react";
 
 interface Template {
   id: string;
@@ -19,19 +19,13 @@ interface Template {
 }
 
 export default function HomePage() {
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
+  const db = useFirestore();
+  
+  const templatesQuery = useMemo(() => {
+    return query(collection(db, "templates"), where("status", "==", "published"));
+  }, [db]);
 
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      const q = query(collection(db, "templates"), where("status", "==", "published"));
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Template[];
-      setTemplates(items);
-      setLoading(false);
-    };
-    fetchTemplates();
-  }, []);
+  const { data: templates, loading } = useCollection<Template>(templatesQuery);
 
   return (
     <div className="min-h-screen pb-20">
@@ -63,10 +57,12 @@ export default function HomePage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-[300px] bg-muted animate-pulse rounded-2xl" />
+              <div key={i} className="h-[300px] bg-muted animate-pulse rounded-2xl flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary/20" />
+              </div>
             ))}
           </div>
-        ) : templates.length > 0 ? (
+        ) : templates && templates.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
