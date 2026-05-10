@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
-import { useFirestore, useAuth, useUser, useFirebaseApp } from "@/firebase";
+import { useFirestore, useUser, useFirebaseApp } from "@/firebase";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, Layout } from "lucide-react";
+import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -133,7 +134,7 @@ export default function TemplateEditorPage() {
         toast({ title: "Background uploaded successfully" });
       })
       .catch(async (err) => {
-        errorEmitter.emit('permission-error', new Error(`Upload Failed: ${err.message}. Ensure Storage is enabled in Firebase Console.`));
+        errorEmitter.emit('permission-error', new Error(`Upload Failed: ${err.message}. Ensure Storage is enabled and Rules are set to public in Firebase Console.`));
       })
       .finally(() => setUploading(false));
   };
@@ -173,7 +174,7 @@ export default function TemplateEditorPage() {
           <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
             <ChevronLeft />
           </Button>
-          <div className="hidden md:block">
+          <div>
             <h1 className="font-bold text-xl">{id === "new" ? "New Template" : config.title}</h1>
             <p className="text-xs text-muted-foreground">Editor Mode</p>
           </div>
@@ -191,7 +192,6 @@ export default function TemplateEditorPage() {
 
       <main className="flex-1 flex flex-col md:flex-row h-[calc(100vh-73px)] overflow-hidden">
         <div className="w-full md:w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8">
-          
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -237,9 +237,9 @@ export default function TemplateEditorPage() {
               <div className="space-y-2">
                 <Label>Background Image</Label>
                 <div className="relative h-24 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
-                  {config.backgroundImageUrl ? (
+                  {config.backgroundImageUrl && (
                     <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-                  ) : null}
+                  )}
                   {uploading ? (
                     <Loader2 className="animate-spin text-primary" />
                   ) : (

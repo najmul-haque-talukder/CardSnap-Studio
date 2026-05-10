@@ -1,0 +1,34 @@
+
+{
+  "entities": {
+    "Template": {
+      "title": "Template",
+      "description": "Photocard template configuration and metadata.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "backgroundImageUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "category": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "usageCount": { "type": "number" },
+        "photoConfig": { "type": "object" },
+        "nameConfig": { "type": "object" },
+        "designationConfig": { "type": "object" },
+        "sessionConfig": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "backgroundImageUrl", "status"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/templates/{templateId}": {
+      "schema": "Template",
+      "description": "Collection of photocard templates."
+    }
+  }
+}
