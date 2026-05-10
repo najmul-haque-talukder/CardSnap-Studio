@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -136,7 +137,7 @@ export default function TemplateEditorPage() {
         toast({
           variant: "destructive",
           title: "Upload Failed",
-          description: "Ensure Firebase Storage is enabled and rules allow access."
+          description: "Check if Firebase Storage rules allow uploads."
         });
       })
       .finally(() => setUploading(false));

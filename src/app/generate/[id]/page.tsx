@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -33,12 +34,17 @@ export default function GeneratePage() {
   useEffect(() => {
     const fetchTemplate = async () => {
       if (!id) return;
-      const docRef = doc(db, "templates", id as string);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        setTemplate(snapshot.data());
+      try {
+        const docRef = doc(db, "templates", id as string);
+        const snapshot = await getDoc(docRef);
+        if (snapshot.exists()) {
+          setTemplate(snapshot.data());
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchTemplate();
   }, [id, db]);
@@ -54,9 +60,8 @@ export default function GeneratePage() {
 
   const handleDownload = async () => {
     if (canvasRef.current) {
-      // Analytics: Track usage in Firestore
       const docRef = doc(db, "templates", id as string);
-      updateDoc(docRef, { usageCount: increment(1) });
+      updateDoc(docRef, { usageCount: increment(1) }).catch(console.error);
       
       canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.png`);
       toast({ title: "Card generated!", description: "Check your downloads folder." });
@@ -103,7 +108,6 @@ export default function GeneratePage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          {/* Form Side */}
           <div className={`w-full md:w-[350px] space-y-6 ${step === 2 ? "hidden md:block" : "block"}`}>
             <div className="space-y-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -174,7 +178,6 @@ export default function GeneratePage() {
             </Button>
           </div>
 
-          {/* Preview Side */}
           <div className={`flex-1 w-full space-y-6 ${step === 1 ? "hidden md:block" : "block"}`}>
             <h2 className="text-xl font-bold hidden md:flex items-center gap-2">
               <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">2</span>
