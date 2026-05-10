@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { SliderInput } from "@/components/ui/slider-input";
 import { ColorPickerInput } from "@/components/ui/color-picker-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -299,7 +300,7 @@ export default function TemplateEditorPage() {
                       <SelectContent>
                         <SelectItem value="normal">Normal</SelectItem>
                         <SelectItem value="bold">Bold</SelectItem>
-                        <SelectItem value="italic">Italic</SelectItem>
+                        <SelectItem value="italic">Ialic</SelectItem>
                         <SelectItem value="bold italic">Bold Italic</SelectItem>
                       </SelectContent>
                     </Select>
