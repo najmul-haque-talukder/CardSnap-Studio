@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -97,6 +96,7 @@ export default function TemplateEditorPage() {
           }
         }
       } catch (err) {
+        console.error(err);
         toast({ title: "Failed to load template", variant: "destructive" });
       } finally {
         setLoading(false);
@@ -121,17 +121,25 @@ export default function TemplateEditorPage() {
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
     setUploading(true);
+    const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const storageRef = ref(storage, fileName);
     
     try {
-      const storageRef = ref(storage, `backgrounds/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const uploadResult = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(uploadResult.ref);
       handleUpdate("backgroundImageUrl", url);
       toast({ title: "Background uploaded successfully" });
     } catch (err: any) {
+      console.error("Storage upload error:", err);
+      toast({ 
+        variant: "destructive",
+        title: "Upload Failed", 
+        description: "Could not upload image. Please check your Firebase Storage Rules."
+      });
       errorEmitter.emit('permission-error', {
-        message: err.message || "Storage upload failed. Ensure Storage is enabled in Firebase Console."
+        message: err.message || "Storage upload failed."
       });
     } finally {
       setUploading(false);
@@ -146,7 +154,13 @@ export default function TemplateEditorPage() {
     setSaving(true);
     const templateId = id === "new" ? `tmp_${Date.now()}` : id as string;
     const docRef = doc(db, "templates", templateId);
-    const data = { ...config, id: templateId, status, updatedAt: serverTimestamp() };
+    const data = { 
+      ...config, 
+      id: templateId, 
+      status, 
+      updatedAt: serverTimestamp(),
+      usageCount: config.usageCount || 0
+    };
 
     setDoc(docRef, data, { merge: true })
       .then(() => {
