@@ -94,7 +94,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
-                <Card className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300">
+                <Card className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/30 hover:bg-card/80">
                   <div className="aspect-[4/3] relative">
                     {template.backgroundImageUrl ? (
                       <Image

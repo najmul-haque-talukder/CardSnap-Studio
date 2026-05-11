@@ -133,13 +133,13 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {templates?.map(template => (
-              <Card key={template.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-all duration-300 rounded-2xl group">
+              <Card key={template.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-all duration-300 rounded-2xl group hover:shadow-xl hover:border-primary/20">
                 <div className="aspect-video relative bg-muted overflow-hidden">
                   {template.backgroundImageUrl ? (
                     <img 
                       src={template.backgroundImageUrl} 
                       alt={template.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                      className="w-full h-full object-cover" 
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted">
