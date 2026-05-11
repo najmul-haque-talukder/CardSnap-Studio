@@ -97,7 +97,7 @@ export default function TemplateEditorPage() {
           }
         }
       } catch (err) {
-        setLoading(false);
+        console.error("Fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -126,20 +126,19 @@ export default function TemplateEditorPage() {
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const storageRef = ref(storage, fileName);
     
-    uploadBytes(storageRef, file)
-      .then(async (uploadResult) => {
-        const url = await getDownloadURL(uploadResult.ref);
-        handleUpdate("backgroundImageUrl", url);
-        toast({ title: "Background uploaded successfully" });
-      })
-      .catch((err: any) => {
-        errorEmitter.emit('permission-error', {
-          message: err.message || "Storage upload failed. Ensure 'Storage' is enabled in Firebase Console and rules allow writes."
-        });
-      })
-      .finally(() => {
-        setUploading(false);
+    try {
+      const uploadResult = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(uploadResult.ref);
+      handleUpdate("backgroundImageUrl", url);
+      toast({ title: "Background uploaded successfully" });
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      errorEmitter.emit('permission-error', {
+        message: err.message || "Storage upload failed. Ensure 'Storage' is enabled in Firebase Console and rules allow writes."
       });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async (status: "draft" | "published") => {

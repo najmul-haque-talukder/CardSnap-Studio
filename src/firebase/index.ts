@@ -1,3 +1,4 @@
+
 'use client';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -15,8 +16,7 @@ export function initializeFirebase(): {
   const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const firestore = getFirestore(firebaseApp);
   const auth = getAuth(firebaseApp);
-  // Explicitly passing the storage bucket from config to ensure correct initialization
-  const storage = getStorage(firebaseApp, firebaseConfig.storageBucket);
+  const storage = getStorage(firebaseApp);
 
   return { firebaseApp, firestore, auth, storage };
 }
