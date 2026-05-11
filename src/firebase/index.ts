@@ -16,7 +16,7 @@ export function initializeFirebase(): {
   const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const firestore = getFirestore(firebaseApp);
   const auth = getAuth(firebaseApp);
-  // Passing explicit storage bucket from config to avoid initialization errors
+  // Ensure storage is initialized with the correct bucket from config
   const storage = getStorage(firebaseApp, firebaseConfig.storageBucket);
 
   return { firebaseApp, firestore, auth, storage };

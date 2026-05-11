@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useRef, useImperativeHandle, forwardRef, useMemo } from "react";
 import { Stage, Layer, Image as KonvaImage, Text, Group } from "react-konva";
 import useImage from "use-image";
 
@@ -54,8 +54,10 @@ interface PhotoCardCanvasProps {
 
 export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, height = 500 }: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
-  const [bgImage] = useImage(config.backgroundImageUrl || "https://picsum.photos/seed/bg/500/500");
-  const [userPhoto] = useImage(userPhotoUrl || "https://picsum.photos/seed/user/200/200");
+  
+  // Use a fallback image if none provided to avoid empty canvas issues
+  const [bgImage] = useImage(config.backgroundImageUrl || "https://picsum.photos/seed/bg-placeholder/500/500", "anonymous");
+  const [userPhoto] = useImage(userPhotoUrl || "https://picsum.photos/seed/user-placeholder/200/200", "anonymous");
 
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
@@ -82,10 +84,17 @@ export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, 
   };
 
   return (
-    <div className="relative aspect-square w-full max-w-[500px] mx-auto shadow-2xl rounded-2xl overflow-hidden border-4 border-muted shadow-primary/20">
+    <div className="relative aspect-square w-full max-w-[500px] mx-auto shadow-2xl rounded-2xl overflow-hidden border-4 border-muted shadow-primary/20 bg-muted/20">
       <Stage width={width} height={height} ref={stageRef}>
         <Layer>
-          {bgImage && <KonvaImage image={bgImage} width={width} height={height} />}
+          {bgImage && (
+            <KonvaImage 
+              image={bgImage} 
+              width={width} 
+              height={height} 
+              key={`bg-${config.backgroundImageUrl}`} 
+            />
+          )}
           
           <Group clipFunc={clipFunc}>
             {userPhoto && (
@@ -95,6 +104,7 @@ export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, 
                 y={config.photoConfig.y}
                 width={config.photoConfig.shape === "circle" ? config.photoConfig.diameter : config.photoConfig.width}
                 height={config.photoConfig.shape === "circle" ? config.photoConfig.diameter : config.photoConfig.height}
+                key={`photo-${userPhotoUrl}`}
               />
             )}
           </Group>

@@ -29,7 +29,7 @@ const DEFAULT_CONFIG = {
   status: "draft",
   category: "events",
   featured: false,
-  backgroundImageUrl: "https://picsum.photos/seed/bg/500/500",
+  backgroundImageUrl: "",
   photoConfig: {
     shape: "circle",
     diameter: 180,
@@ -86,7 +86,7 @@ export default function TemplateEditorPage() {
     const fetchData = async () => {
       try {
         if (id === "new") {
-          setConfig(DEFAULT_CONFIG);
+          setConfig({ ...DEFAULT_CONFIG });
         } else {
           const docRef = doc(db, "templates", id as string);
           const snapshot = await getDoc(docRef);
@@ -131,7 +131,6 @@ export default function TemplateEditorPage() {
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const storageRef = ref(storage, fileName);
     
-    // Explicitly setting content type metadata for better browser compatibility
     const metadata = {
       contentType: file.type,
     };
@@ -147,10 +146,10 @@ export default function TemplateEditorPage() {
         toast({
           variant: "destructive",
           title: "Upload Failed",
-          description: "Check if Firebase Storage is enabled and rules are public during development.",
+          description: err.message || "Could not upload image.",
         });
         errorEmitter.emit('permission-error', {
-          message: err.message || "Storage upload failed. Check CORS or Rules."
+          message: err.message || "Storage upload failed. Check Security Rules."
         });
       })
       .finally(() => {
@@ -265,19 +264,23 @@ export default function TemplateEditorPage() {
               <div className="space-y-2">
                 <Label>Background Image</Label>
                 <div className="relative h-24 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
-                  {config.backgroundImageUrl && (
+                  {config.backgroundImageUrl ? (
                     <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                  ) : (
+                    <div className="absolute inset-0 bg-primary/5 flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-primary/20" />
+                    </div>
                   )}
                   {uploading ? (
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-2 z-10">
                       <Loader2 className="animate-spin text-primary" />
                       <span className="text-[10px] animate-pulse">Uploading...</span>
                     </div>
                   ) : (
-                    <>
-                      <Upload className="w-6 h-6 text-muted-foreground mb-1" />
-                      <span className="text-xs font-medium">Change background</span>
-                    </>
+                    <div className="flex flex-col items-center gap-1 z-10">
+                      <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-xs font-medium">Click to upload background</span>
+                    </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" disabled={uploading} />
                 </div>
@@ -384,9 +387,9 @@ export default function TemplateEditorPage() {
             <PhotoCardCanvas 
               config={{
                 ...config,
-                nameConfig: { ...config.nameConfig, text: "Admin Example" },
-                designationConfig: { ...config.designationConfig, text: "Senior Administrator" },
-                sessionConfig: { ...config.sessionConfig, text: "2024-2025" }
+                nameConfig: { ...config.nameConfig, text: "Preview Name" },
+                designationConfig: { ...config.designationConfig, text: "Designation Label" },
+                sessionConfig: { ...config.sessionConfig, text: "2024 - Session" }
               }} 
             />
           </div>
