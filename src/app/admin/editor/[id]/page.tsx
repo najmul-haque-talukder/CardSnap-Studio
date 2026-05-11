@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -36,7 +35,7 @@ const DEFAULT_CONFIG = {
     width: 180,
     height: 180,
     borderRadius: 20,
-    borderWidth: 0,
+    borderWidth: 2,
     borderColor: "#ffffff",
     x: 160,
     y: 80
@@ -106,8 +105,8 @@ export default function TemplateEditorPage() {
             router.push("/admin/dashboard");
           }
         }
-      } catch (err) {
-        // Errors handled by global listener
+      } catch (err: any) {
+        // Handled by global listener
       } finally {
         setLoading(false);
       }
@@ -142,12 +141,10 @@ export default function TemplateEditorPage() {
       })
       .then((url) => {
         handleUpdate("backgroundImageUrl", url);
-        toast({ title: "Background uploaded!" });
+        toast({ title: "Background uploaded successfully!" });
       })
       .catch((err: any) => {
-        errorEmitter.emit('permission-error', {
-          message: "Upload failed. Check Storage Rules."
-        });
+        toast({ variant: "destructive", title: "Upload failed", description: "Check Storage Rules in Console." });
       })
       .finally(() => {
         setUploading(false);
@@ -155,7 +152,10 @@ export default function TemplateEditorPage() {
   };
 
   const handleSave = (status: "draft" | "published") => {
-    if (!user) return;
+    if (!user) {
+      toast({ variant: "destructive", title: "Error", description: "You must be logged in to save." });
+      return;
+    }
     setSaving(true);
     const templateId = id === "new" ? `tmp_${Date.now()}` : id as string;
     const docRef = doc(db, "templates", templateId);
@@ -168,6 +168,10 @@ export default function TemplateEditorPage() {
     };
 
     setDoc(docRef, data, { merge: true })
+      .then(() => {
+        toast({ title: `Template saved as ${status}` });
+        router.push("/admin/dashboard");
+      })
       .catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
@@ -178,8 +182,6 @@ export default function TemplateEditorPage() {
       })
       .finally(() => {
         setSaving(false);
-        toast({ title: `Template saved as ${status}` });
-        router.push("/admin/dashboard");
       });
   };
 
@@ -213,7 +215,8 @@ export default function TemplateEditorPage() {
       </header>
 
       <main className="flex-1 flex overflow-hidden">
-        <div className="w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 custom-scrollbar shrink-0">
+        {/* Scrollable Sidebar */}
+        <div className="w-[450px] overflow-y-auto bg-card/30 border-r border-border/50 p-6 space-y-8 custom-scrollbar shrink-0 h-full">
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -302,12 +305,12 @@ export default function TemplateEditorPage() {
 
                 <div className="grid gap-4">
                   {config.photoConfig.shape === "circle" ? (
-                    <SliderInput label="Diameter" value={config.photoConfig.diameter} min={50} max={400} onChange={(val) => handleUpdate("photoConfig.diameter", val)} />
+                    <SliderInput label="Diameter" value={config.photoConfig.diameter || 180} min={50} max={400} onChange={(val) => handleUpdate("photoConfig.diameter", val)} />
                   ) : (
                     <>
-                      <SliderInput label="Width" value={config.photoConfig.width} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.width", val)} />
-                      <SliderInput label="Height" value={config.photoConfig.height} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.height", val)} />
-                      <SliderInput label="Border Radius" value={config.photoConfig.borderRadius} min={0} max={225} onChange={(val) => handleUpdate("photoConfig.borderRadius", val)} />
+                      <SliderInput label="Width" value={config.photoConfig.width || 180} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.width", val)} />
+                      <SliderInput label="Height" value={config.photoConfig.height || 180} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.height", val)} />
+                      <SliderInput label="Border Radius" value={config.photoConfig.borderRadius || 20} min={0} max={225} onChange={(val) => handleUpdate("photoConfig.borderRadius", val)} />
                     </>
                   )}
                   <SliderInput label="X Position" value={config.photoConfig.x} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.x", val)} />
@@ -357,28 +360,29 @@ export default function TemplateEditorPage() {
               </TabsContent>
             ))}
           </Tabs>
-          <div className="h-20" />
+          <div className="h-24" />
         </div>
 
-        <div className="flex-1 bg-muted/10 flex items-center justify-center p-12 overflow-hidden relative">
+        {/* Fixed Preview Section */}
+        <div className="flex-1 bg-muted/5 flex items-center justify-center p-12 overflow-hidden relative h-full">
           <div className="w-full max-w-[500px] space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Editor Preview</h3>
               </div>
-              <Badge variant="outline" className="border-primary text-primary bg-primary/5">Editor Active</Badge>
+              <Badge variant="outline" className="border-primary text-primary bg-primary/5">Interactive</Badge>
             </div>
             
             <div className="w-full shadow-2xl rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted/50">
                <PhotoCardCanvas 
                 config={{
                   ...config,
-                  nameConfig: { ...config.nameConfig, text: "Preview User" },
+                  nameConfig: { ...config.nameConfig, text: "Admin Preview Name" },
                   designationConfig: { ...config.designationConfig, text: "Designation Label" },
-                  sessionConfig: { ...config.sessionConfig, text: "2024 - Session" }
+                  sessionConfig: { ...config.sessionConfig, text: "2024 - 25 Batch" }
                 }} 
-                userPhotoUrl="https://picsum.photos/seed/user-placeholder/600/600"
+                userPhotoUrl="https://picsum.photos/seed/admin-placeholder/600/600"
                 onLayerTransform={(layerName, x, y) => {
                   handleUpdate(`${layerName}.x`, x);
                   handleUpdate(`${layerName}.y`, y);
@@ -387,17 +391,17 @@ export default function TemplateEditorPage() {
             </div>
             <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground italic">
               <MousePointer2 className="w-3 h-3" />
-              Tip: You can drag all layers (photo and text) directly in the preview.
+              Tip: Drag text or photo directly in the preview to position them.
             </div>
           </div>
         </div>
       </main>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.3); }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.4); }
       `}</style>
     </div>
   );
