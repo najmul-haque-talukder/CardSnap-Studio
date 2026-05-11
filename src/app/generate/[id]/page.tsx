@@ -119,7 +119,8 @@ export default function GeneratePage() {
       </nav>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8 items-start">
+        <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
+          {/* Step 1: Details Sidebar */}
           <div className={`w-full md:w-[350px] space-y-6 ${step === 2 ? "hidden md:block" : "block"}`}>
             <div className="space-y-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -209,41 +210,46 @@ export default function GeneratePage() {
             </Button>
           </div>
 
-          <div className={`flex-1 w-full space-y-6 ${step === 1 ? "hidden md:block" : "block"}`}>
+          {/* Step 2: Preview & Download (Centered and sized to match image) */}
+          <div className={`flex-1 w-full max-w-[500px] space-y-6 ${step === 1 ? "hidden md:block" : "block"}`}>
             <h2 className="text-xl font-bold hidden md:flex items-center gap-2">
               <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">2</span>
               Live Preview
             </h2>
             
-            <PhotoCardCanvas 
-              config={canvasConfig} 
-              userPhotoUrl={userPhotoUrl} 
-              userPhotoScale={userPhotoScale}
-              ref={canvasRef} 
-            />
-
-            <div className="flex flex-col md:flex-row gap-4">
-              <Button 
-                variant="outline" 
-                className="flex-1 h-14 rounded-xl md:hidden" 
-                onClick={() => setStep(1)}
-              >
-                ← Edit Details
-              </Button>
-              <Button 
-                className="flex-[2] h-14 rounded-xl text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/20"
-                onClick={handleDownload}
-                disabled={!userPhotoUrl || !formData.name}
-              >
-                <Download className="w-5 h-5" /> Download 4K PNG
-              </Button>
+            <div className="w-full">
+              <PhotoCardCanvas 
+                config={canvasConfig} 
+                userPhotoUrl={userPhotoUrl} 
+                userPhotoScale={userPhotoScale}
+                ref={canvasRef} 
+              />
             </div>
-            
-            {userPhotoUrl && (
-              <p className="text-center text-xs text-muted-foreground italic md:block hidden">
-                Hint: Use the mouse to drag your photo within the frame for the perfect fit.
-              </p>
-            )}
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-14 rounded-xl md:hidden" 
+                  onClick={() => setStep(1)}
+                >
+                  ← Edit Details
+                </Button>
+                <Button 
+                  className="flex-1 h-14 rounded-xl text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/20"
+                  onClick={handleDownload}
+                  disabled={!userPhotoUrl || !formData.name}
+                >
+                  <Download className="w-5 h-5" /> Download 4K PNG
+                </Button>
+              </div>
+              
+              {userPhotoUrl && (
+                <p className="text-center text-xs text-muted-foreground italic md:block hidden">
+                  Hint: Use the mouse to drag your photo within the frame for the perfect fit.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </main>
