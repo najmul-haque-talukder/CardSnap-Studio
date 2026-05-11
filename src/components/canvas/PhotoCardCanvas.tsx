@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useRef, useImperativeHandle, forwardRef, useEffect, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Text, Group, Circle, Rect } from "react-konva";
 import useImage from "use-image";
 
@@ -52,10 +52,24 @@ export const PhotoCardCanvas = forwardRef(({
   onLayerTransform
 }: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   
-  // Use null instead of empty string for useImage
   const [bgImage] = useImage(config.backgroundImageUrl || "https://placehold.co/600x600?text=Background", "anonymous");
   const [userPhoto] = useImage(userPhotoUrl || null, "anonymous");
+
+  // Handle Responsiveness by scaling the stage
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        setScale(containerWidth / width);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [width]);
 
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
@@ -147,8 +161,14 @@ export const PhotoCardCanvas = forwardRef(({
   };
 
   return (
-    <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-[#1e1e1e] rounded-xl shadow-inner border border-border/50">
-      <Stage width={width} height={height} ref={stageRef}>
+    <div ref={containerRef} className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-[#1e1e1e] rounded-xl shadow-inner border border-border/50">
+      <Stage 
+        width={width * scale} 
+        height={height * scale} 
+        scaleX={scale} 
+        scaleY={scale} 
+        ref={stageRef}
+      >
         <Layer>
           {bgImage && (
             <KonvaImage 

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, MousePointer2, Palette } from "lucide-react";
+import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, MousePointer2, Palette, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -77,6 +77,7 @@ export default function TemplateEditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -106,7 +107,7 @@ export default function TemplateEditorPage() {
           }
         }
       } catch (err: any) {
-        // Handled by global listener
+        // Handled globally
       } finally {
         setLoading(false);
       }
@@ -141,10 +142,10 @@ export default function TemplateEditorPage() {
       })
       .then((url) => {
         handleUpdate("backgroundImageUrl", url);
-        toast({ title: "Background uploaded successfully!" });
+        toast({ title: "Background uploaded!" });
       })
       .catch((err: any) => {
-        toast({ variant: "destructive", title: "Upload failed", description: "Storage rules might be restricting this." });
+        toast({ variant: "destructive", title: "Upload failed" });
       })
       .finally(() => {
         setUploading(false);
@@ -152,10 +153,7 @@ export default function TemplateEditorPage() {
   };
 
   const handleSave = (status: "draft" | "published") => {
-    if (!user) {
-      toast({ variant: "destructive", title: "Error", description: "You must be logged in to save." });
-      return;
-    }
+    if (!user) return;
     setSaving(true);
     const templateId = id === "new" ? `tmp_${Date.now()}` : id as string;
     const docRef = doc(db, "templates", templateId);
@@ -192,61 +190,62 @@ export default function TemplateEditorPage() {
   );
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
-      <header className="h-16 border-b border-border/50 bg-card px-4 flex items-center justify-between z-50 shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
+      <header className="h-14 md:h-16 border-b border-border/50 bg-card px-3 md:px-4 flex items-center justify-between z-50 shrink-0">
+        <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")} className="h-8 w-8">
             <ChevronLeft />
           </Button>
-          <div>
-            <h1 className="font-bold text-xl leading-tight">{id === "new" ? "New Template" : config.title}</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Design Mode</p>
+          <div className="truncate">
+            <h1 className="font-bold text-sm md:text-xl leading-tight truncate">{id === "new" ? "New Template" : config.title}</h1>
+            <p className="hidden md:block text-[10px] text-muted-foreground uppercase tracking-wider">Design Mode</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleSave("draft")} disabled={saving}>
-            Save Draft
+          <Button variant="outline" size="sm" onClick={() => handleSave("draft")} disabled={saving} className="h-8 text-xs px-2 md:px-3">
+            Draft
           </Button>
-          <Button size="sm" onClick={() => handleSave("published")} disabled={saving} className="gap-2 font-bold">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <Button size="sm" onClick={() => handleSave("published")} disabled={saving} className="h-8 text-xs gap-1 md:gap-2 font-bold px-2 md:px-4">
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 md:w-4 md:h-4" />}
             Save & Publish
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
-        {/* Left: Scrollable Sidebar */}
-        <div className="w-[450px] overflow-y-auto bg-card/30 border-r border-border/50 p-6 space-y-8 custom-scrollbar h-full shrink-0">
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        {/* Settings Sidebar */}
+        <div className={`
+          fixed md:relative inset-y-0 left-0 z-40 w-full md:w-[450px] bg-card border-r border-border/50 
+          transition-transform duration-300 transform 
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          overflow-y-auto p-4 md:p-6 space-y-8 custom-scrollbar
+        `}>
+          <div className="md:hidden flex justify-end mb-4">
+             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>Close Settings</Button>
+          </div>
+
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-bold">Base Properties</h2>
             </div>
             <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label>Admin Title</Label>
-                <input 
-                  value={config.title} 
-                  onChange={(e) => handleUpdate("title", e.target.value)} 
-                  className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                />
+              <div className="space-y-1">
+                <Label className="text-xs">Admin Title</Label>
+                <Input value={config.title} onChange={(e) => handleUpdate("title", e.target.value)} className="h-9 rounded-lg" />
               </div>
-              <div className="space-y-2">
-                <Label>Public Subtitle</Label>
-                <input 
-                  value={config.subtitle} 
-                  onChange={(e) => handleUpdate("subtitle", e.target.value)} 
-                  className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                />
+              <div className="space-y-1">
+                <Label className="text-xs">Public Subtitle</Label>
+                <Input value={config.subtitle} onChange={(e) => handleUpdate("subtitle", e.target.value)} className="h-9 rounded-lg" />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Category</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Category</Label>
                   <select 
                     value={config.category} 
                     onChange={(e) => handleUpdate("category", e.target.value)}
-                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs focus:outline-none"
                   >
                     <option value="events">Events</option>
                     <option value="professional">Professional</option>
@@ -254,31 +253,27 @@ export default function TemplateEditorPage() {
                     <option value="social">Social</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Featured</Label>
-                  <div className="flex items-center space-x-2 h-10 px-3 border rounded-xl bg-muted/20">
-                    <Switch checked={config.featured} onCheckedChange={(val) => handleUpdate("featured", val)} />
-                    <span className="text-xs font-medium">Spotlight</span>
+                <div className="space-y-1">
+                  <Label className="text-xs">Featured</Label>
+                  <div className="flex items-center justify-between h-9 px-3 border rounded-lg bg-muted/20">
+                    <span className="text-[10px] font-medium">Spotlight</span>
+                    <Switch checked={config.featured} onCheckedChange={(val) => handleUpdate("featured", val)} className="scale-75" />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Background Layer</Label>
-                <div className="relative h-40 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
+              <div className="space-y-1">
+                <Label className="text-xs">Background Layer</Label>
+                <div className="relative h-24 md:h-32 rounded-lg border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
                   {config.backgroundImageUrl ? (
-                    <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                    <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-40" />
                   ) : (
-                    <ImageIcon className="w-10 h-10 text-primary/20" />
+                    <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-primary/20" />
                   )}
-                  {uploading ? (
-                    <Loader2 className="animate-spin text-primary w-8 h-8 z-10" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 z-10 p-4">
-                      <Upload className="w-8 h-8 text-muted-foreground" />
-                      <span className="text-xs font-medium">Upload Card Image</span>
-                    </div>
-                  )}
+                  <div className="flex flex-col items-center gap-1 z-10">
+                    <Upload className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+                    <span className="text-[10px] font-medium">Click to Upload</span>
+                  </div>
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading} />
                 </div>
               </div>
@@ -286,30 +281,26 @@ export default function TemplateEditorPage() {
           </section>
 
           <Tabs defaultValue="photo" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full h-12 rounded-xl bg-muted/50 p-1">
-              <TabsTrigger value="photo" className="rounded-lg"><ImageIcon className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="name" className="rounded-lg"><Type className="w-4 h-4" /></TabsTrigger>
-              <TabsTrigger value="designation" className="rounded-lg text-xs">Job</TabsTrigger>
-              <TabsTrigger value="session" className="rounded-lg text-xs">Batch</TabsTrigger>
+            <TabsList className="grid grid-cols-4 w-full h-10 rounded-lg bg-muted/50 p-1">
+              <TabsTrigger value="photo" className="rounded-md"><ImageIcon className="w-3 h-3" /></TabsTrigger>
+              <TabsTrigger value="name" className="rounded-md"><Type className="w-3 h-3" /></TabsTrigger>
+              <TabsTrigger value="designation" className="rounded-md text-[10px]">Job</TabsTrigger>
+              <TabsTrigger value="session" className="rounded-md text-[10px]">Batch</TabsTrigger>
             </TabsList>
 
             <TabsContent value="photo" className="mt-6 space-y-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="w-5 h-5 text-primary" />
-                <h3 className="font-bold">Photo Configuration</h3>
-              </div>
-              <div className="space-y-4">
-                <Label>Frame Shape</Label>
-                <RadioGroup value={config.photoConfig.shape} onValueChange={(val) => handleUpdate("photoConfig.shape", val)} className="flex gap-4">
-                  <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-lg flex-1 border border-border/50">
-                    <RadioGroupItem value="circle" id="circle" />
-                    <Label htmlFor="circle">Circle</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-lg flex-1 border border-border/50">
-                    <RadioGroupItem value="square" id="square" />
-                    <Label htmlFor="square">Square</Label>
-                  </div>
-                </RadioGroup>
+              <div className="grid gap-5">
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold">Frame Shape</Label>
+                  <RadioGroup value={config.photoConfig.shape} onValueChange={(val) => handleUpdate("photoConfig.shape", val)} className="flex gap-2">
+                    {["circle", "square"].map(s => (
+                      <div key={s} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-lg flex-1 border border-border/50">
+                        <RadioGroupItem value={s} id={s} className="scale-75" />
+                        <Label htmlFor={s} className="text-xs capitalize">{s}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
 
                 <div className="grid gap-4">
                   {config.photoConfig.shape === "circle" ? (
@@ -324,11 +315,8 @@ export default function TemplateEditorPage() {
                   <SliderInput label="Horizontal (X)" value={config.photoConfig.x} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.x", val)} />
                   <SliderInput label="Vertical (Y)" value={config.photoConfig.y} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.y", val)} />
                   
-                  <div className="pt-4 border-t border-border/50">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Palette className="w-4 h-4 text-primary" />
-                      <h4 className="text-sm font-bold">Border Controls</h4>
-                    </div>
+                  <div className="pt-4 border-t border-border/50 space-y-4">
+                    <h4 className="text-xs font-bold flex items-center gap-2"><Palette className="w-3 h-3" /> Border Controls</h4>
                     <SliderInput label="Border Width" value={config.photoConfig.borderWidth || 0} min={0} max={20} onChange={(val) => handleUpdate("photoConfig.borderWidth", val)} />
                     <ColorPickerInput label="Border Color" value={config.photoConfig.borderColor || "#ffffff"} onChange={(val) => handleUpdate("photoConfig.borderColor", val)} />
                   </div>
@@ -338,28 +326,24 @@ export default function TemplateEditorPage() {
 
             {["name", "designation", "session"].map((layer) => (
               <TabsContent key={layer} value={layer} className="mt-6 space-y-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Type className="w-5 h-5 text-primary" />
-                  <h3 className="font-bold capitalize">{layer} Layer</h3>
-                </div>
                 <div className="grid gap-4">
                   <SliderInput label="Horizontal (X)" value={config[`${layer}Config`].x} min={-250} max={500} onChange={(val) => handleUpdate(`${layer}Config.x`, val)} />
                   <SliderInput label="Vertical (Y)" value={config[`${layer}Config`].y} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.y`, val)} />
                   <SliderInput label="Font Size" value={config[`${layer}Config`].fontSize} min={8} max={72} onChange={(val) => handleUpdate(`${layer}Config.fontSize`, val)} />
                   <div className="space-y-2">
-                    <Label>Font Style</Label>
-                    <select value={config[`${layer}Config`].fontStyle} onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm">
+                    <Label className="text-xs">Font Style</Label>
+                    <select value={config[`${layer}Config`].fontStyle} onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-xs">
                       <option value="normal">Normal</option>
                       <option value="bold">Bold</option>
-                      <option value="italic">Inter</option>
+                      <option value="italic">Italic</option>
                       <option value="bold italic">Bold Italic</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Alignment</Label>
-                    <div className="flex bg-muted/30 p-1 rounded-xl">
+                    <Label className="text-xs">Alignment</Label>
+                    <div className="flex bg-muted/30 p-1 rounded-lg">
                       {["left", "center", "right"].map(align => (
-                        <Button key={align} variant={config[`${layer}Config`].align === align ? "default" : "ghost"} className="flex-1 h-8 rounded-lg capitalize text-xs" onClick={() => handleUpdate(`${layer}Config.align`, align)}>{align}</Button>
+                        <Button key={align} variant={config[`${layer}Config`].align === align ? "default" : "ghost"} className="flex-1 h-7 rounded-md capitalize text-[10px]" onClick={() => handleUpdate(`${layer}Config.align`, align)}>{align}</Button>
                       ))}
                     </div>
                   </div>
@@ -368,18 +352,27 @@ export default function TemplateEditorPage() {
               </TabsContent>
             ))}
           </Tabs>
-          <div className="h-24" />
+          <div className="h-12" />
         </div>
 
-        {/* Right: Fixed Preview Section */}
-        <div className="flex-1 bg-muted/5 flex items-center justify-center p-12 overflow-hidden relative h-full">
-          <div className="w-full max-w-[500px] space-y-6">
+        {/* Preview Panel */}
+        <div className="flex-1 bg-muted/5 flex flex-col items-center justify-center p-4 md:p-12 overflow-hidden relative">
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="md:hidden absolute top-4 left-4 z-30 gap-2 rounded-full shadow-lg"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Settings className="w-4 h-4" /> Edit Settings
+          </Button>
+
+          <div className="w-full max-w-[500px] space-y-4 md:space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview Canvas</h3>
+                <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse" />
+                <h3 className="text-[10px] md:text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview Canvas</h3>
               </div>
-              <Badge variant="outline" className="border-primary text-primary bg-primary/5">Interactive</Badge>
+              <Badge variant="outline" className="hidden md:flex border-primary text-primary bg-primary/5 text-[10px]">Interactive</Badge>
             </div>
             
             <div className="w-full shadow-2xl rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted/50">
@@ -397,7 +390,7 @@ export default function TemplateEditorPage() {
                 }}
               />
             </div>
-            <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground italic">
+            <div className="flex items-center justify-center gap-2 text-[9px] md:text-[10px] text-muted-foreground italic">
               <MousePointer2 className="w-3 h-3" />
               Tip: Drag elements directly in the preview to position them.
             </div>
@@ -406,10 +399,9 @@ export default function TemplateEditorPage() {
       </main>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.4); }
       `}</style>
     </div>
   );

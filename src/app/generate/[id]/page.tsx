@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { ChevronLeft, Download, Camera, Loader2, Sparkles, Move, ZoomIn } from "lucide-react";
+import { ChevronLeft, Download, Camera, Loader2, Sparkles, Move, ZoomIn, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -59,8 +59,8 @@ export default function GeneratePage() {
     if (file) {
       const url = URL.createObjectURL(file);
       setUserPhotoUrl(url);
-      setUserPhotoScale(1); // Reset scale on new upload
-      toast({ title: "Photo attached!", description: "You can now drag and zoom the photo in the preview." });
+      setUserPhotoScale(1); 
+      toast({ title: "Photo attached!", description: "You can now adjust it in the preview." });
     }
   };
 
@@ -72,12 +72,11 @@ export default function GeneratePage() {
           const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
-            requestResourceData: { usageCount: 1 } // Context for the permission listener
+            requestResourceData: { usageCount: 1 }
           });
           errorEmitter.emit('permission-error', permissionError);
         });
       
-      // Export as high quality JPG
       canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.jpg`);
       toast({ title: "Card generated!", description: "Check your downloads folder." });
     }
@@ -107,38 +106,42 @@ export default function GeneratePage() {
     <div className="min-h-screen bg-background">
       <nav className="border-b border-border/50 p-4 sticky top-0 bg-background/80 backdrop-blur-md z-50">
         <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
-              <ChevronLeft />
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.push("/")} className="h-8 w-8 md:h-10 md:w-10">
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
             </Button>
-            <h1 className="font-bold text-lg">{template.title}</h1>
+            <h1 className="font-bold text-sm md:text-lg truncate max-w-[150px] md:max-w-none">{template.title}</h1>
           </div>
-          {template.usageCount > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              <Sparkles className="w-3 h-3 text-primary" /> {template.usageCount} generated
-            </Badge>
-          )}
+          <Badge variant="secondary" className="gap-1 text-[10px] md:text-xs">
+            <Sparkles className="w-3 h-3 text-primary" /> {template.usageCount || 0}
+          </Badge>
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 md:py-12">
         <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
-          {/* Step 1: Details Sidebar */}
+          {/* Mobile Step Indicator */}
+          <div className="flex md:hidden w-full gap-2 mb-4">
+            <div className={`h-1 flex-1 rounded-full ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
+            <div className={`h-1 flex-1 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
+          </div>
+
+          {/* Sidebar / Form */}
           <div className={`w-full md:w-[350px] space-y-6 ${step === 2 ? "hidden md:block" : "block"}`}>
             <div className="space-y-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">1</span>
+              <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                <span className="w-6 h-6 md:w-8 md:h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
                 Customize Details
               </h2>
               
               <div className="space-y-2">
-                <Label>Your Photo (Required)</Label>
+                <Label className="text-sm">Your Photo (Required)</Label>
                 <div className="relative group aspect-square rounded-2xl border-2 border-dashed border-border bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center overflow-hidden">
                   {userPhotoUrl ? (
                     <img src={userPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
                     <>
-                      <Camera className="w-10 h-10 text-muted-foreground mb-2" />
+                      <Camera className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground mb-2" />
                       <span className="text-xs text-muted-foreground">Click to upload photo</span>
                     </>
                   )}
@@ -152,8 +155,8 @@ export default function GeneratePage() {
               </div>
 
               {userPhotoUrl && (
-                <div className="p-4 bg-muted/50 rounded-xl space-y-3 border border-border/50 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="p-4 bg-muted/50 rounded-xl space-y-3 border border-border/50">
+                  <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3" /> Photo Zoom</span>
                     <span>{Math.round(userPhotoScale * 100)}%</span>
                   </div>
@@ -164,63 +167,60 @@ export default function GeneratePage() {
                     step={0.01} 
                     onValueChange={([val]) => setUserPhotoScale(val)}
                   />
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
-                    <Move className="w-3 h-3" /> Tip: Drag the photo in the preview to reposition.
-                  </p>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="John Doe"
-                  className="rounded-xl h-12"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="designation">Designation / Department</Label>
-                <Input
-                  id="designation"
-                  value={formData.designation}
-                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                  placeholder="Department/Designation"
-                  className="rounded-xl h-12"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="session">Session / Batch</Label>
-                <Input
-                  id="session"
-                  value={formData.session}
-                  onChange={(e) => setFormData({ ...formData, session: e.target.value })}
-                  placeholder="Session 2021-22"
-                  className="rounded-xl h-12"
-                />
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label htmlFor="name" className="text-xs">Full Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="John Doe"
+                    className="rounded-xl h-10 md:h-12 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="designation" className="text-xs">Designation / Department</Label>
+                  <Input
+                    id="designation"
+                    value={formData.designation}
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    placeholder="Department/Designation"
+                    className="rounded-xl h-10 md:h-12 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="session" className="text-xs">Session / Batch</Label>
+                  <Input
+                    id="session"
+                    value={formData.session}
+                    onChange={(e) => setFormData({ ...formData, session: e.target.value })}
+                    placeholder="Session 2021-22"
+                    className="rounded-xl h-10 md:h-12 text-sm"
+                  />
+                </div>
               </div>
             </div>
 
             <Button 
-              className="w-full h-14 rounded-xl text-lg font-bold gap-2 md:hidden" 
+              className="w-full h-12 md:h-14 rounded-xl text-base md:text-lg font-bold gap-2 md:hidden" 
               onClick={() => setStep(2)}
               disabled={!userPhotoUrl || !formData.name}
             >
-              Continue to Preview <ChevronLeft className="rotate-180" />
+              Continue to Preview <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
 
-          {/* Step 2: Preview & Download */}
+          {/* Preview Section */}
           <div className={`flex-1 w-full max-w-[500px] space-y-6 ${step === 1 ? "hidden md:block" : "block"}`}>
-            <h2 className="text-xl font-bold hidden md:flex items-center gap-2">
+            <h2 className="text-lg md:text-xl font-bold hidden md:flex items-center gap-2">
               <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">2</span>
               Live Preview
             </h2>
             
-            <div className="w-full">
+            <div className="w-full relative">
               <PhotoCardCanvas 
                 config={canvasConfig} 
                 userPhotoUrl={userPhotoUrl || DEFAULT_USER_PLACEHOLDER} 
@@ -230,25 +230,24 @@ export default function GeneratePage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col md:flex-row gap-3">
                 <Button 
                   variant="outline" 
-                  className="flex-1 h-14 rounded-xl md:hidden" 
+                  className="flex-1 h-12 md:h-14 rounded-xl md:hidden" 
                   onClick={() => setStep(1)}
                 >
-                  ← Edit Details
+                  <ChevronLeft className="w-4 h-4 mr-2" /> Edit Details
                 </Button>
                 <Button 
-                  className="flex-1 h-14 rounded-xl text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/20"
+                  className="flex-1 h-12 md:h-14 rounded-xl text-base md:text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/10"
                   onClick={handleDownload}
                   disabled={!userPhotoUrl || !formData.name}
                 >
-                  <Download className="w-5 h-5" /> Download 4K JPG
+                  <Download className="w-4 h-4 md:w-5 md:h-5" /> Download 4K JPG
                 </Button>
               </div>
-              
-              <p className="text-center text-xs text-muted-foreground italic md:block hidden">
-                Hint: {userPhotoUrl ? "Use the mouse to drag your photo within the frame." : "Upload your photo to start customizing."}
+              <p className="text-center text-[10px] md:text-xs text-muted-foreground italic">
+                {userPhotoUrl ? "Tip: You can drag your photo in the preview to position it." : "Upload your photo to see the final result."}
               </p>
             </div>
           </div>
