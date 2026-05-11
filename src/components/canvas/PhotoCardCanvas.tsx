@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useImperativeHandle, forwardRef } from "react";
@@ -64,7 +63,7 @@ export const PhotoCardCanvas = forwardRef(({
 }: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
   
-  const [bgImage] = useImage(config.backgroundImageUrl || "https://picsum.photos/seed/bg-placeholder/500/500", "anonymous");
+  const [bgImage] = useImage(config.backgroundImageUrl || "", "anonymous");
   const [userPhoto] = useImage(userPhotoUrl || "", "anonymous");
 
   useImperativeHandle(ref, () => ({
@@ -97,7 +96,7 @@ export const PhotoCardCanvas = forwardRef(({
   const frameHeight = config.photoConfig.shape === "circle" ? (config.photoConfig.diameter || 150) : (config.photoConfig.height || 150);
 
   return (
-    <div className="relative aspect-square w-full max-w-[500px] mx-auto shadow-2xl rounded-2xl overflow-hidden border-4 border-muted shadow-primary/20 bg-muted/20">
+    <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-muted/20">
       <Stage width={width} height={height} ref={stageRef}>
         <Layer>
           {bgImage && (

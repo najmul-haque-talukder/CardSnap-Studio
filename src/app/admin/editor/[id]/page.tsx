@@ -96,7 +96,7 @@ export default function TemplateEditorPage() {
           }
         }
       } catch (err) {
-        // Silently handled or shown via global listener
+        // Errors handled by global listener
       } finally {
         setLoading(false);
       }
@@ -121,11 +121,6 @@ export default function TemplateEditorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!user) {
-      toast({ title: "Please login to upload", variant: "destructive" });
-      return;
-    }
-    
     setUploading(true);
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const storageRef = ref(storage, fileName);
@@ -136,11 +131,11 @@ export default function TemplateEditorPage() {
       })
       .then((url) => {
         handleUpdate("backgroundImageUrl", url);
-        toast({ title: "Background uploaded successfully!" });
+        toast({ title: "Background uploaded!" });
       })
       .catch((err: any) => {
         errorEmitter.emit('permission-error', {
-          message: "Storage upload failed. Ensure 'Storage' is enabled in Firebase and Rules allow uploads."
+          message: "Upload failed. Check Storage Rules."
         });
       })
       .finally(() => {
@@ -149,10 +144,7 @@ export default function TemplateEditorPage() {
   };
 
   const handleSave = (status: "draft" | "published") => {
-    if (!user) {
-      toast({ title: "Please login first", variant: "destructive" });
-      return;
-    }
+    if (!user) return;
     setSaving(true);
     const templateId = id === "new" ? `tmp_${Date.now()}` : id as string;
     const docRef = doc(db, "templates", templateId);
@@ -175,7 +167,7 @@ export default function TemplateEditorPage() {
       })
       .finally(() => {
         setSaving(false);
-        toast({ title: "Template updated" });
+        toast({ title: `Template saved as ${status}` });
         router.push("/admin/dashboard");
       });
   };
@@ -188,7 +180,6 @@ export default function TemplateEditorPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
-      {/* Fixed Header */}
       <header className="h-16 border-b border-border/50 bg-card px-4 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
@@ -211,7 +202,7 @@ export default function TemplateEditorPage() {
       </header>
 
       <main className="flex-1 flex overflow-hidden">
-        {/* Scrollable Sidebar (Left) */}
+        {/* Scrollable Settings Sidebar */}
         <div className="w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 custom-scrollbar shrink-0">
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
@@ -234,7 +225,7 @@ export default function TemplateEditorPage() {
                   <select 
                     value={config.category} 
                     onChange={(e) => handleUpdate("category", e.target.value)}
-                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <option value="events">Events</option>
                     <option value="professional">Professional</option>
@@ -245,10 +236,7 @@ export default function TemplateEditorPage() {
                 <div className="space-y-2">
                   <Label>Featured</Label>
                   <div className="flex items-center space-x-2 h-10 px-3 border rounded-xl bg-muted/20">
-                    <Switch 
-                      checked={config.featured} 
-                      onCheckedChange={(val) => handleUpdate("featured", val)}
-                    />
+                    <Switch checked={config.featured} onCheckedChange={(val) => handleUpdate("featured", val)} />
                     <span className="text-xs font-medium">Highlight</span>
                   </div>
                 </div>
@@ -256,26 +244,21 @@ export default function TemplateEditorPage() {
 
               <div className="space-y-2">
                 <Label>Background Image</Label>
-                <div className="relative h-40 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group transition-all hover:bg-muted/30">
+                <div className="relative h-40 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
                   {config.backgroundImageUrl ? (
                     <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-60" />
                   ) : (
-                    <div className="absolute inset-0 bg-primary/5 flex items-center justify-center">
-                      <ImageIcon className="w-10 h-10 text-primary/20" />
-                    </div>
+                    <ImageIcon className="w-10 h-10 text-primary/20" />
                   )}
                   {uploading ? (
-                    <div className="flex flex-col items-center gap-2 z-10">
-                      <Loader2 className="animate-spin text-primary w-8 h-8" />
-                      <span className="text-xs animate-pulse font-medium">Uploading...</span>
-                    </div>
+                    <Loader2 className="animate-spin text-primary w-8 h-8 z-10" />
                   ) : (
-                    <div className="flex flex-col items-center gap-2 z-10 p-4 text-center">
-                      <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-xs font-medium">Click to upload background</span>
+                    <div className="flex flex-col items-center gap-2 z-10 p-4">
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                      <span className="text-xs font-medium">Upload Background</span>
                     </div>
                   )}
-                  <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" disabled={uploading} />
+                  <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading} />
                 </div>
               </div>
             </div>
@@ -333,37 +316,23 @@ export default function TemplateEditorPage() {
                   <SliderInput label="X Position" value={config[`${layer}Config`].x} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.x`, val)} />
                   <SliderInput label="Y Position" value={config[`${layer}Config`].y} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.y`, val)} />
                   <SliderInput label="Font Size" value={config[`${layer}Config`].fontSize} min={8} max={72} onChange={(val) => handleUpdate(`${layer}Config.fontSize`, val)} />
-                  
                   <div className="space-y-2">
                     <Label>Font Style</Label>
-                    <select 
-                      value={config[`${layer}Config`].fontStyle} 
-                      onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)}
-                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <select value={config[`${layer}Config`].fontStyle} onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm">
                       <option value="normal">Normal</option>
                       <option value="bold">Bold</option>
                       <option value="italic">Italic</option>
                       <option value="bold italic">Bold Italic</option>
                     </select>
                   </div>
-
                   <div className="space-y-2">
                     <Label>Alignment</Label>
-                    <div className="flex bg-muted/30 p-1 rounded-xl border border-border/50">
+                    <div className="flex bg-muted/30 p-1 rounded-xl">
                       {["left", "center", "right"].map(align => (
-                        <Button 
-                          key={align} 
-                          variant={config[`${layer}Config`].align === align ? "default" : "ghost"} 
-                          className="flex-1 h-8 rounded-lg capitalize text-xs"
-                          onClick={() => handleUpdate(`${layer}Config.align`, align)}
-                        >
-                          {align}
-                        </Button>
+                        <Button key={align} variant={config[`${layer}Config`].align === align ? "default" : "ghost"} className="flex-1 h-8 rounded-lg capitalize text-xs" onClick={() => handleUpdate(`${layer}Config.align`, align)}>{align}</Button>
                       ))}
                     </div>
                   </div>
-
                   <ColorPickerInput label="Text Color" value={config[`${layer}Config`].color} onChange={(val) => handleUpdate(`${layer}Config.color`, val)} />
                 </div>
               </TabsContent>
@@ -372,8 +341,8 @@ export default function TemplateEditorPage() {
           <div className="h-20" />
         </div>
 
-        {/* Fixed Preview Section (Right) */}
-        <div className="flex-1 bg-muted/10 flex items-center justify-center p-4 md:p-12 overflow-hidden relative">
+        {/* Fixed Preview Section */}
+        <div className="flex-1 bg-muted/10 flex items-center justify-center p-12 overflow-hidden relative">
           <div className="w-full max-w-[500px] space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -383,38 +352,29 @@ export default function TemplateEditorPage() {
               <Badge variant="outline" className="border-primary text-primary bg-primary/5">Editor Active</Badge>
             </div>
             
-            <div className="w-full shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] shadow-primary/10 rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted/50">
+            <div className="w-full shadow-2xl rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted/50">
                <PhotoCardCanvas 
                 config={{
                   ...config,
-                  nameConfig: { ...config.nameConfig, text: "Preview Name" },
+                  nameConfig: { ...config.nameConfig, text: "Preview User" },
                   designationConfig: { ...config.designationConfig, text: "Designation Label" },
                   sessionConfig: { ...config.sessionConfig, text: "2024 - Session" }
                 }} 
+                userPhotoUrl="https://picsum.photos/seed/user-placeholder/600/600"
               />
             </div>
-            
             <p className="text-center text-xs text-muted-foreground italic">
-              Changes reflect instantly in the canvas preview.
+              Changes reflect instantly. Admin preview uses a sample user photo.
             </p>
           </div>
         </div>
       </main>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--muted));
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--primary) / 0.3);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.3); }
       `}</style>
     </div>
   );
