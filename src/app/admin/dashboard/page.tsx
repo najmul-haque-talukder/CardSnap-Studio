@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useFirestore, useAuth, useCollection, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,18 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
+import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Template {
@@ -24,6 +35,10 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
 
+  // State for delete confirmation
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
+  const [confirmText, setConfirmText] = useState("");
+
   const templatesQuery = useMemo(() => collection(db, "templates"), [db]);
   const { data: templates, loading: templatesLoading } = useCollection<Template>(templatesQuery);
 
@@ -33,17 +48,36 @@ export default function AdminDashboard() {
     }
   }, [user, userLoading, router]);
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this template?")) {
-      deleteDoc(doc(db, "templates", id));
-      toast({ title: "Template deleted" });
+  const initiateDelete = (id: string) => {
+    setDeleteTemplateId(id);
+    setConfirmText("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (confirmText === "DELETE" && deleteTemplateId) {
+      try {
+        await deleteDoc(doc(db, "templates", deleteTemplateId));
+        toast({ title: "Template deleted successfully" });
+        setDeleteTemplateId(null);
+        setConfirmText("");
+      } catch (error) {
+        toast({ 
+          variant: "destructive", 
+          title: "Delete failed", 
+          description: "Check your internet connection or permissions." 
+        });
+      }
     }
   };
 
   const togglePublish = async (template: Template) => {
     const newStatus = template.status === "published" ? "draft" : "published";
-    updateDoc(doc(db, "templates", template.id), { status: newStatus });
-    toast({ title: `Template ${newStatus}` });
+    try {
+      await updateDoc(doc(db, "templates", template.id), { status: newStatus });
+      toast({ title: `Template marked as ${newStatus}` });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Update failed" });
+    }
   };
 
   const handleLogout = () => {
@@ -69,15 +103,15 @@ export default function AdminDashboard() {
               <LayoutDashboard className="text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Manage your photocard templates</p>
+              <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Manage and design your photocard templates</p>
             </div>
           </div>
           <div className="flex gap-3 w-full md:w-auto">
-            <Button onClick={() => router.push("/admin/editor")} className="flex-1 md:flex-none h-12 rounded-xl gap-2 font-bold">
+            <Button onClick={() => router.push("/admin/editor")} className="flex-1 md:flex-none h-12 rounded-xl gap-2 font-bold px-6">
               <Plus className="w-5 h-5" /> Create Template
             </Button>
-            <Button variant="outline" onClick={handleLogout} className="h-12 rounded-xl gap-2 text-destructive hover:text-destructive">
+            <Button variant="outline" onClick={handleLogout} className="h-12 rounded-xl gap-2 text-destructive hover:text-destructive hover:bg-destructive/10">
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -85,16 +119,20 @@ export default function AdminDashboard() {
 
         {templatesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-2xl" />)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-muted/30 animate-pulse rounded-2xl" />)}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {templates?.map(template => (
-              <Card key={template.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-colors rounded-2xl">
-                <div className="aspect-video relative bg-muted">
-                  <img src={template.backgroundImageUrl} alt={template.title} className="w-full h-full object-cover" />
+              <Card key={template.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-all duration-300 rounded-2xl group">
+                <div className="aspect-video relative bg-muted overflow-hidden">
+                  <img 
+                    src={template.backgroundImageUrl} 
+                    alt={template.title} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
                   <div className="absolute top-3 left-3">
-                    <Badge variant={template.status === "published" ? "default" : "secondary"} className="shadow-lg">
+                    <Badge variant={template.status === "published" ? "default" : "secondary"} className="shadow-lg backdrop-blur-sm bg-opacity-80">
                       {template.status === "published" ? "Published" : "Draft"}
                     </Badge>
                   </div>
@@ -106,9 +144,14 @@ export default function AdminDashboard() {
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button variant="outline" size="icon" className="h-10 w-10 rounded-lg" onClick={() => togglePublish(template)}>
-                      {template.status === "published" ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {template.status === "published" ? <EyeOff className="w-4 h-4 text-orange-500" /> : <Eye className="w-4 h-4 text-green-500" />}
                     </Button>
-                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-lg text-destructive hover:bg-destructive/10" onClick={() => handleDelete(template.id)}>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-10 w-10 rounded-lg text-destructive hover:bg-destructive/10" 
+                      onClick={() => initiateDelete(template.id)}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -117,6 +160,40 @@ export default function AdminDashboard() {
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteTemplateId} onOpenChange={(open) => !open && setDeleteTemplateId(null)}>
+          <AlertDialogContent className="rounded-2xl border-border/50">
+            <AlertDialogHeader>
+              <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-2">
+                <AlertTriangle className="text-destructive w-6 h-6" />
+              </div>
+              <AlertDialogTitle className="text-2xl font-bold">Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-base">
+                This action cannot be undone. This will permanently delete the template and all associated data.
+              </娅lertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4 space-y-3">
+              <p className="text-sm font-medium">Please type <span className="text-destructive font-bold">DELETE</span> to confirm:</p>
+              <Input 
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Type 'DELETE' here"
+                className="h-12 rounded-xl border-destructive/30 focus-visible:ring-destructive"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl h-11">Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleConfirmDelete}
+                disabled={confirmText !== "DELETE"}
+                className="rounded-xl h-11 bg-destructive hover:bg-destructive/90 text-white font-bold"
+              >
+                Delete Template
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
