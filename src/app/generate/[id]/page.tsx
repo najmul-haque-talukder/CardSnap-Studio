@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Download, Camera, Loader2, Sparkles } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { ChevronLeft, Download, Camera, Loader2, Sparkles, Move, ZoomIn } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -27,6 +28,7 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [userPhotoUrl, setUserPhotoUrl] = useState<string>("");
+  const [userPhotoScale, setUserPhotoScale] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     designation: "",
@@ -56,7 +58,8 @@ export default function GeneratePage() {
     if (file) {
       const url = URL.createObjectURL(file);
       setUserPhotoUrl(url);
-      toast({ title: "Photo attached!" });
+      setUserPhotoScale(1); // Reset scale on new upload
+      toast({ title: "Photo attached!", description: "You can now drag and zoom the photo in the preview." });
     }
   };
 
@@ -144,6 +147,25 @@ export default function GeneratePage() {
                 </div>
               </div>
 
+              {userPhotoUrl && (
+                <div className="p-4 bg-muted/50 rounded-xl space-y-3 border border-border/50 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3" /> Photo Zoom</span>
+                    <span>{Math.round(userPhotoScale * 100)}%</span>
+                  </div>
+                  <Slider 
+                    value={[userPhotoScale]} 
+                    min={0.5} 
+                    max={3} 
+                    step={0.01} 
+                    onValueChange={([val]) => setUserPhotoScale(val)}
+                  />
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+                    <Move className="w-3 h-3" /> Tip: Drag the photo in the preview to reposition.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name *</Label>
                 <Input
@@ -193,7 +215,12 @@ export default function GeneratePage() {
               Live Preview
             </h2>
             
-            <PhotoCardCanvas config={canvasConfig} userPhotoUrl={userPhotoUrl} ref={canvasRef} />
+            <PhotoCardCanvas 
+              config={canvasConfig} 
+              userPhotoUrl={userPhotoUrl} 
+              userPhotoScale={userPhotoScale}
+              ref={canvasRef} 
+            />
 
             <div className="flex flex-col md:flex-row gap-4">
               <Button 
@@ -211,6 +238,12 @@ export default function GeneratePage() {
                 <Download className="w-5 h-5" /> Download 4K PNG
               </Button>
             </div>
+            
+            {userPhotoUrl && (
+              <p className="text-center text-xs text-muted-foreground italic md:block hidden">
+                Hint: Use the mouse to drag your photo within the frame for the perfect fit.
+              </p>
+            )}
           </div>
         </div>
       </main>

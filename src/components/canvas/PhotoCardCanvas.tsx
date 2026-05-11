@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useRef, useImperativeHandle, forwardRef, useMemo } from "react";
+import React, { useRef, useImperativeHandle, forwardRef } from "react";
 import { Stage, Layer, Image as KonvaImage, Text, Group } from "react-konva";
 import useImage from "use-image";
 
@@ -48,16 +48,24 @@ interface TemplateConfig {
 interface PhotoCardCanvasProps {
   config: TemplateConfig;
   userPhotoUrl?: string;
+  userPhotoScale?: number;
   width?: number;
   height?: number;
+  onUserPhotoTransform?: (x: number, y: number) => void;
 }
 
-export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, height = 500 }: PhotoCardCanvasProps, ref) => {
+export const PhotoCardCanvas = forwardRef(({ 
+  config, 
+  userPhotoUrl, 
+  userPhotoScale = 1,
+  width = 500, 
+  height = 500,
+  onUserPhotoTransform
+}: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
   
-  // Use a fallback image if none provided to avoid empty canvas issues
   const [bgImage] = useImage(config.backgroundImageUrl || "https://picsum.photos/seed/bg-placeholder/500/500", "anonymous");
-  const [userPhoto] = useImage(userPhotoUrl || "https://picsum.photos/seed/user-placeholder/200/200", "anonymous");
+  const [userPhoto] = useImage(userPhotoUrl || "", "anonymous");
 
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
@@ -72,6 +80,7 @@ export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, 
 
   const clipFunc = (ctx: any) => {
     const pc = config.photoConfig;
+    ctx.beginPath();
     if (pc.shape === "circle") {
       const radius = (pc.diameter || 150) / 2;
       ctx.arc(pc.x + radius, pc.y + radius, radius, 0, Math.PI * 2, false);
@@ -81,7 +90,11 @@ export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, 
       const r = pc.borderRadius || 0;
       ctx.roundRect(pc.x, pc.y, w, h, r);
     }
+    ctx.closePath();
   };
+
+  const frameWidth = config.photoConfig.shape === "circle" ? (config.photoConfig.diameter || 150) : (config.photoConfig.width || 150);
+  const frameHeight = config.photoConfig.shape === "circle" ? (config.photoConfig.diameter || 150) : (config.photoConfig.height || 150);
 
   return (
     <div className="relative aspect-square w-full max-w-[500px] mx-auto shadow-2xl rounded-2xl overflow-hidden border-4 border-muted shadow-primary/20 bg-muted/20">
@@ -100,10 +113,20 @@ export const PhotoCardCanvas = forwardRef(({ config, userPhotoUrl, width = 500, 
             {userPhoto && (
               <KonvaImage 
                 image={userPhoto} 
-                x={config.photoConfig.x} 
-                y={config.photoConfig.y}
-                width={config.photoConfig.shape === "circle" ? config.photoConfig.diameter : config.photoConfig.width}
-                height={config.photoConfig.shape === "circle" ? config.photoConfig.diameter : config.photoConfig.height}
+                x={config.photoConfig.x + (frameWidth / 2)} 
+                y={config.photoConfig.y + (frameHeight / 2)}
+                width={userPhoto.width}
+                height={userPhoto.height}
+                scaleX={(frameWidth / userPhoto.width) * userPhotoScale}
+                scaleY={(frameWidth / userPhoto.width) * userPhotoScale}
+                offsetX={userPhoto.width / 2}
+                offsetY={userPhoto.height / 2}
+                draggable
+                onDragEnd={(e) => {
+                  if (onUserPhotoTransform) {
+                    onUserPhotoTransform(e.target.x(), e.target.y());
+                  }
+                }}
                 key={`photo-${userPhotoUrl}`}
               />
             )}
