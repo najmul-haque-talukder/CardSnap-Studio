@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, MousePointer2 } from "lucide-react";
+import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, MousePointer2, Palette } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -35,6 +35,8 @@ const DEFAULT_CONFIG = {
     width: 180,
     height: 180,
     borderRadius: 20,
+    borderWidth: 0,
+    borderColor: "#ffffff",
     x: 160,
     y: 80
   },
@@ -90,7 +92,16 @@ export default function TemplateEditorPage() {
           const docRef = doc(db, "templates", id as string);
           const snapshot = await getDoc(docRef);
           if (snapshot.exists()) {
-            setConfig({ ...DEFAULT_CONFIG, ...snapshot.data() });
+            const data = snapshot.data();
+            // Deep merge with DEFAULT_CONFIG to ensure new properties exist
+            setConfig({
+              ...DEFAULT_CONFIG,
+              ...data,
+              photoConfig: { ...DEFAULT_CONFIG.photoConfig, ...(data.photoConfig || {}) },
+              nameConfig: { ...DEFAULT_CONFIG.nameConfig, ...(data.nameConfig || {}) },
+              designationConfig: { ...DEFAULT_CONFIG.designationConfig, ...(data.designationConfig || {}) },
+              sessionConfig: { ...DEFAULT_CONFIG.sessionConfig, ...(data.sessionConfig || {}) }
+            });
           } else {
             router.push("/admin/dashboard");
           }
@@ -302,6 +313,15 @@ export default function TemplateEditorPage() {
                   )}
                   <SliderInput label="X Position" value={config.photoConfig.x} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.x", val)} />
                   <SliderInput label="Y Position" value={config.photoConfig.y} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.y", val)} />
+                  
+                  <div className="pt-4 border-t border-border/50">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Palette className="w-4 h-4 text-primary" />
+                      <h4 className="text-sm font-bold">Border Styling</h4>
+                    </div>
+                    <SliderInput label="Border Width" value={config.photoConfig.borderWidth || 0} min={0} max={20} onChange={(val) => handleUpdate("photoConfig.borderWidth", val)} />
+                    <ColorPickerInput label="Border Color" value={config.photoConfig.borderColor || "#ffffff"} onChange={(val) => handleUpdate("photoConfig.borderColor", val)} />
+                  </div>
                 </div>
               </div>
             </TabsContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useImperativeHandle, forwardRef } from "react";
-import { Stage, Layer, Image as KonvaImage, Text, Group } from "react-konva";
+import { Stage, Layer, Image as KonvaImage, Text, Group, Circle, Rect } from "react-konva";
 import useImage from "use-image";
 
 interface LayerConfig {
@@ -22,6 +22,8 @@ interface TemplateConfig {
     width?: number;
     height?: number;
     borderRadius?: number;
+    borderWidth?: number;
+    borderColor?: string;
     x: number;
     y: number;
   };
@@ -51,7 +53,7 @@ export const PhotoCardCanvas = forwardRef(({
 }: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
   
-  const [bgImage] = useImage(config.backgroundImageUrl || "", "anonymous");
+  const [bgImage] = useImage(config.backgroundImageUrl || "https://placehold.co/600x600?text=No+Background", "anonymous");
   const [userPhoto] = useImage(userPhotoUrl || "", "anonymous");
 
   useImperativeHandle(ref, () => ({
@@ -105,6 +107,39 @@ export const PhotoCardCanvas = forwardRef(({
     );
   };
 
+  const renderBorder = () => {
+    const pc = config.photoConfig;
+    const bw = pc.borderWidth || 0;
+    if (bw <= 0) return null;
+
+    if (pc.shape === "circle") {
+      const radius = (pc.diameter || 150) / 2;
+      return (
+        <Circle
+          x={pc.x + radius}
+          y={pc.y + radius}
+          radius={radius}
+          stroke={pc.borderColor || "#ffffff"}
+          strokeWidth={bw}
+          listening={false}
+        />
+      );
+    } else {
+      return (
+        <Rect
+          x={pc.x}
+          y={pc.y}
+          width={pc.width || 150}
+          height={pc.height || 150}
+          cornerRadius={pc.borderRadius || 0}
+          stroke={pc.borderColor || "#ffffff"}
+          strokeWidth={bw}
+          listening={false}
+        />
+      );
+    }
+  };
+
   return (
     <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-muted/20 rounded-xl shadow-inner border border-border/50">
       <Stage width={width} height={height} ref={stageRef}>
@@ -140,6 +175,8 @@ export const PhotoCardCanvas = forwardRef(({
               />
             )}
           </Group>
+
+          {renderBorder()}
 
           {renderTextLayer("nameConfig", config.nameConfig)}
           {renderTextLayer("designationConfig", config.designationConfig)}
