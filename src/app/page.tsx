@@ -94,21 +94,20 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
-                <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+                <Card className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300">
                   <div className="aspect-[4/3] relative">
                     {template.backgroundImageUrl ? (
                       <Image
                         src={template.backgroundImageUrl}
                         alt={template.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted">
                         <ImageIcon className="w-12 h-12 text-muted-foreground/30" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     {template.featured && (
                       <div className="absolute top-4 right-4 z-10">
                         <Badge className="bg-yellow-500 text-black font-bold gap-1 shadow-lg">
