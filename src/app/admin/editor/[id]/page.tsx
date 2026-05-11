@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -97,7 +96,7 @@ export default function TemplateEditorPage() {
           }
         }
       } catch (err) {
-        console.error("Fetch error:", err);
+        // Silently handled or shown via global listener
       } finally {
         setLoading(false);
       }
@@ -141,7 +140,7 @@ export default function TemplateEditorPage() {
       })
       .catch((err: any) => {
         errorEmitter.emit('permission-error', {
-          message: "Upload failed. Check Firebase Storage rules and connection."
+          message: "Storage upload failed. Ensure 'Storage' is enabled in Firebase and Rules allow uploads."
         });
       })
       .finally(() => {
@@ -188,31 +187,32 @@ export default function TemplateEditorPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden bg-background">
-      <header className="border-b border-border/50 bg-card p-4 flex items-center justify-between z-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
+      {/* Fixed Header */}
+      <header className="h-16 border-b border-border/50 bg-card px-4 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
             <ChevronLeft />
           </Button>
           <div>
-            <h1 className="font-bold text-xl">{id === "new" ? "New Template" : config.title}</h1>
-            <p className="text-xs text-muted-foreground">Editor Mode</p>
+            <h1 className="font-bold text-xl leading-tight">{id === "new" ? "New Template" : config.title}</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Editor Mode</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleSave("draft")} disabled={saving}>
+          <Button variant="outline" size="sm" onClick={() => handleSave("draft")} disabled={saving}>
             Save Draft
           </Button>
-          <Button onClick={() => handleSave("published")} disabled={saving} className="gap-2 font-bold shadow-lg shadow-primary/20">
+          <Button size="sm" onClick={() => handleSave("published")} disabled={saving} className="gap-2 font-bold">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save & Publish
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col md:flex-row h-[calc(100vh-73px)] overflow-hidden">
-        {/* Scrollable Sidebar */}
-        <div className="w-full md:w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 custom-scrollbar">
+      <main className="flex-1 flex overflow-hidden">
+        {/* Scrollable Sidebar (Left) */}
+        <div className="w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 custom-scrollbar shrink-0">
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -272,7 +272,7 @@ export default function TemplateEditorPage() {
                   ) : (
                     <div className="flex flex-col items-center gap-2 z-10 p-4 text-center">
                       <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-sm font-medium">Click to upload background</span>
+                      <span className="text-xs font-medium">Click to upload background</span>
                     </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" disabled={uploading} />
@@ -372,8 +372,8 @@ export default function TemplateEditorPage() {
           <div className="h-20" />
         </div>
 
-        {/* Fixed Preview Section */}
-        <div className="flex-1 bg-muted/10 flex items-center justify-center p-4 md:p-8 overflow-hidden relative">
+        {/* Fixed Preview Section (Right) */}
+        <div className="flex-1 bg-muted/10 flex items-center justify-center p-4 md:p-12 overflow-hidden relative">
           <div className="w-full max-w-[500px] space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -383,7 +383,7 @@ export default function TemplateEditorPage() {
               <Badge variant="outline" className="border-primary text-primary bg-primary/5">Editor Active</Badge>
             </div>
             
-            <div className="w-full shadow-2xl shadow-primary/20 rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted">
+            <div className="w-full shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] shadow-primary/10 rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted/50">
                <PhotoCardCanvas 
                 config={{
                   ...config,
@@ -403,7 +403,7 @@ export default function TemplateEditorPage() {
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
@@ -413,7 +413,7 @@ export default function TemplateEditorPage() {
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--primary) / 0.5);
+          background: hsl(var(--primary) / 0.3);
         }
       `}</style>
     </div>

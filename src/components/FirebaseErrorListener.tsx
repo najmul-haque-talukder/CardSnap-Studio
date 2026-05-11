@@ -9,11 +9,11 @@ export const FirebaseErrorListener: React.FC = () => {
 
   useEffect(() => {
     const handlePermissionError = (error: any) => {
-      console.error('Firebase Error Captured:', error);
+      // Avoid console.error to keep the interface clean from captured empty objects
       toast({
         variant: "destructive",
         title: "Firebase Error",
-        description: error.message || "Missing permissions or Storage not configured correctly. Check Firebase Console.",
+        description: error.message || "Request failed. This usually means Security Rules or Storage buckets are not configured correctly in the Firebase Console.",
       });
     };
 

@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Template": {
@@ -27,7 +26,7 @@
   },
   "firestore": {
     "/templates/{templateId}": {
-      "schema": { "$ref": "#/entities/Template" },
+      "schema": { "$ref": "#/backend/entities/Template" },
       "description": "Collection of photocard templates designed by admins."
     }
   }
