@@ -94,7 +94,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
-                <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(139,92,246,0.15)]">
+                <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
                   <div className="aspect-[4/3] relative">
                     {template.backgroundImageUrl ? (
                       <Image
@@ -108,10 +108,10 @@ export default function HomePage() {
                         <ImageIcon className="w-12 h-12 text-muted-foreground/30" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     {template.featured && (
                       <div className="absolute top-4 right-4 z-10">
-                        <Badge className="bg-yellow-500 text-black font-bold gap-1">
+                        <Badge className="bg-yellow-500 text-black font-bold gap-1 shadow-lg">
                           <Star className="w-3 h-3 fill-current" /> Featured
                         </Badge>
                       </div>
