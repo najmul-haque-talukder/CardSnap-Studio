@@ -55,7 +55,7 @@ export const PhotoCardCanvas = forwardRef(({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   
-  const [bgImage] = useImage(config.backgroundImageUrl || "https://placehold.co/600x600?text=Background", "anonymous");
+  const [bgImage] = useImage(config.backgroundImageUrl || null, "anonymous");
   const [userPhoto] = useImage(userPhotoUrl || null, "anonymous");
 
   // Handle Responsiveness by scaling the stage
@@ -63,26 +63,46 @@ export const PhotoCardCanvas = forwardRef(({
     const handleResize = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
-        setScale(containerWidth / width);
+        if (containerWidth > 0) {
+          setScale(containerWidth / width);
+        }
       }
     };
     handleResize();
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
+    
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
+    };
   }, [width]);
 
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
       if (!stageRef.current) return;
-      const dataUrl = stageRef.current.toDataURL({ 
-        pixelRatio: 4,
-        mimeType: 'image/jpeg',
-        quality: 1.0
-      });
-      const link = document.createElement("a");
-      link.download = filename;
-      link.href = dataUrl;
-      link.click();
+      const stage = stageRef.current;
+      
+      // Safety check to avoid InvalidStateError on zero dimensions
+      if (stage.width() <= 0 || stage.height() <= 0) {
+        console.error("Cannot export: Stage has zero dimensions.");
+        return;
+      }
+
+      try {
+        const dataUrl = stage.toDataURL({ 
+          pixelRatio: 4, // Up-scale to 4K quality (Stage 500 * 4 = 2000px)
+          mimeType: 'image/jpeg',
+          quality: 1.0
+        });
+        const link = document.createElement("a");
+        link.download = filename;
+        link.href = dataUrl;
+        link.click();
+      } catch (e) {
+        console.error("Export failed:", e);
+      }
     }
   }));
 
@@ -115,7 +135,7 @@ export const PhotoCardCanvas = forwardRef(({
         fontStyle={layerConfig.fontStyle || "normal"}
         fill={layerConfig.color || "#000000"}
         align={layerConfig.align || "center"}
-        width={width}
+        width={width} // Ensure text is centered relative to card width
         fontFamily="Bricolage Grotesque"
         draggable={!!onLayerTransform}
         onDragEnd={(e) => {
@@ -163,20 +183,22 @@ export const PhotoCardCanvas = forwardRef(({
   return (
     <div ref={containerRef} className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-[#1e1e1e] rounded-xl shadow-inner border border-border/50">
       <Stage 
-        width={width * scale} 
-        height={height * scale} 
+        width={Math.max(1, width * scale)} 
+        height={Math.max(1, height * scale)} 
         scaleX={scale} 
         scaleY={scale} 
         ref={stageRef}
       >
         <Layer>
-          {bgImage && (
+          {bgImage ? (
             <KonvaImage 
               image={bgImage} 
               width={width} 
               height={height} 
               key={`bg-${config.backgroundImageUrl}`} 
             />
+          ) : (
+             <Rect width={width} height={height} fill="#1a1a1a" />
           )}
           
           <Group clipFunc={clipFunc}>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { ChevronLeft, Download, Camera, Loader2, Sparkles, Move, ZoomIn, ArrowRight } from "lucide-react";
+import { ChevronLeft, Download, Camera, Loader2, Sparkles, ZoomIn, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -67,6 +67,7 @@ export default function GeneratePage() {
   const handleDownload = async () => {
     if (canvasRef.current && id) {
       const docRef = doc(db, "templates", id as string);
+      // Increment usage count safely
       updateDoc(docRef, { usageCount: increment(1) })
         .catch(async (err) => {
           const permissionError = new FirestorePermissionError({
@@ -77,7 +78,7 @@ export default function GeneratePage() {
           errorEmitter.emit('permission-error', permissionError);
         });
       
-      canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.jpg`);
+      canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_') || 'card'}_${Date.now()}.jpg`);
       toast({ title: "Card generated!", description: "Check your downloads folder." });
     }
   };
