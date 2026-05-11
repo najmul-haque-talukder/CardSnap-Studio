@@ -6,18 +6,18 @@
       "description": "Photocard template configuration and metadata.",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "subtitle": { "type": "string" },
-        "backgroundImageUrl": { "type": "string" },
-        "status": { "type": "string", "enum": ["draft", "published"] },
-        "category": { "type": "string" },
-        "featured": { "type": "boolean" },
-        "usageCount": { "type": "number" },
-        "photoConfig": { "type": "object" },
-        "nameConfig": { "type": "object" },
-        "designationConfig": { "type": "object" },
-        "sessionConfig": { "type": "object" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "title": { "type": "string", "description": "Admin title of the template" },
+        "subtitle": { "type": "string", "description": "Public subtitle displayed on cards" },
+        "backgroundImageUrl": { "type": "string", "description": "URL of the background image stored in Firebase Storage" },
+        "status": { "type": "string", "enum": ["draft", "published"], "description": "Publishing status" },
+        "category": { "type": "string", "description": "Template category (e.g., events, social)" },
+        "featured": { "type": "boolean", "description": "Whether the template is highlighted on homepage" },
+        "usageCount": { "type": "number", "description": "Total number of cards generated using this template" },
+        "photoConfig": { "type": "object", "description": "Configuration for the user photo placement and shape" },
+        "nameConfig": { "type": "object", "description": "Configuration for user name text placement" },
+        "designationConfig": { "type": "object", "description": "Configuration for job title text placement" },
+        "sessionConfig": { "type": "object", "description": "Configuration for session/date text placement" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
       },
       "required": ["title", "backgroundImageUrl", "status"]
     }
@@ -28,7 +28,7 @@
   "firestore": {
     "/templates/{templateId}": {
       "schema": { "$ref": "#/entities/Template" },
-      "description": "Collection of photocard templates."
+      "description": "Collection of photocard templates designed by admins."
     }
   }
 }

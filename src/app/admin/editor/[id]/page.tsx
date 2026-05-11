@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { SliderInput } from "@/components/ui/slider-input";
-import { ColorPickerInput } from "@/components/ui/color-picker-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
@@ -20,6 +18,8 @@ import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type,
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
+import { SliderInput } from "@/components/ui/slider-input";
+import { ColorPickerInput } from "@/components/ui/color-picker-input";
 
 const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
 
@@ -118,7 +118,7 @@ export default function TemplateEditorPage() {
     });
   };
 
-  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -131,25 +131,17 @@ export default function TemplateEditorPage() {
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const storageRef = ref(storage, fileName);
     
-    const metadata = {
-      contentType: file.type,
-    };
-    
-    uploadBytes(storageRef, file, metadata)
-      .then(async (uploadResult) => {
-        const url = await getDownloadURL(uploadResult.ref);
+    uploadBytes(storageRef, file, { contentType: file.type })
+      .then((uploadResult) => {
+        return getDownloadURL(uploadResult.ref);
+      })
+      .then((url) => {
         handleUpdate("backgroundImageUrl", url);
         toast({ title: "Background uploaded successfully!" });
       })
       .catch((err: any) => {
-        console.error("Upload error:", err);
-        toast({
-          variant: "destructive",
-          title: "Upload Failed",
-          description: "Could not upload image. Check your internet or Firebase Storage rules.",
-        });
         errorEmitter.emit('permission-error', {
-          message: err.message || "Storage upload failed. Check Security Rules."
+          message: "Upload failed. Check Firebase Storage rules and connection."
         });
       })
       .finally(() => {
@@ -174,10 +166,6 @@ export default function TemplateEditorPage() {
     };
 
     setDoc(docRef, data, { merge: true })
-      .then(() => {
-        toast({ title: "Template saved successfully!" });
-        router.push("/admin/dashboard");
-      })
       .catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
@@ -186,7 +174,11 @@ export default function TemplateEditorPage() {
         });
         errorEmitter.emit('permission-error', permissionError);
       })
-      .finally(() => setSaving(false));
+      .finally(() => {
+        setSaving(false);
+        toast({ title: "Template updated" });
+        router.push("/admin/dashboard");
+      });
   };
 
   if (loading || userLoading || !config) return (
@@ -196,7 +188,7 @@ export default function TemplateEditorPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col overflow-hidden bg-background">
       <header className="border-b border-border/50 bg-card p-4 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
@@ -242,7 +234,7 @@ export default function TemplateEditorPage() {
                   <select 
                     value={config.category} 
                     onChange={(e) => handleUpdate("category", e.target.value)}
-                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <option value="events">Events</option>
                     <option value="professional">Professional</option>
@@ -264,9 +256,9 @@ export default function TemplateEditorPage() {
 
               <div className="space-y-2">
                 <Label>Background Image</Label>
-                <div className="relative h-32 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group transition-all hover:bg-muted/30">
+                <div className="relative h-40 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group transition-all hover:bg-muted/30">
                   {config.backgroundImageUrl ? (
-                    <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+                    <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-60" />
                   ) : (
                     <div className="absolute inset-0 bg-primary/5 flex items-center justify-center">
                       <ImageIcon className="w-10 h-10 text-primary/20" />
@@ -275,13 +267,12 @@ export default function TemplateEditorPage() {
                   {uploading ? (
                     <div className="flex flex-col items-center gap-2 z-10">
                       <Loader2 className="animate-spin text-primary w-8 h-8" />
-                      <span className="text-xs animate-pulse font-medium">Uploading to Firebase...</span>
+                      <span className="text-xs animate-pulse font-medium">Uploading...</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 z-10 p-4 text-center">
                       <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
                       <span className="text-sm font-medium">Click to upload background</span>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Supports PNG, JPG, WEBP</p>
                     </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" disabled={uploading} />
@@ -291,7 +282,7 @@ export default function TemplateEditorPage() {
           </section>
 
           <Tabs defaultValue="photo" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full h-12 rounded-xl bg-muted/50 p-1 sticky top-0 z-10 backdrop-blur-sm">
+            <TabsList className="grid grid-cols-4 w-full h-12 rounded-xl bg-muted/50 p-1">
               <TabsTrigger value="photo" className="rounded-lg"><ImageIcon className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="name" className="rounded-lg"><Type className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="designation" className="rounded-lg text-xs">Job</TabsTrigger>
@@ -348,7 +339,7 @@ export default function TemplateEditorPage() {
                     <select 
                       value={config[`${layer}Config`].fontStyle} 
                       onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)}
-                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="normal">Normal</option>
                       <option value="bold">Bold</option>
@@ -378,20 +369,21 @@ export default function TemplateEditorPage() {
               </TabsContent>
             ))}
           </Tabs>
-          <div className="h-20" /> {/* Spacer for bottom scroll */}
+          <div className="h-20" />
         </div>
 
         {/* Fixed Preview Section */}
-        <div className="flex-1 bg-muted/10 flex items-center justify-center p-4 md:p-8 overflow-hidden">
-          <div className="space-y-6 w-full max-w-[500px]">
+        <div className="flex-1 bg-muted/10 flex items-center justify-center p-4 md:p-8 overflow-hidden relative">
+          <div className="w-full max-w-[500px] space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</h3>
               </div>
-              <Badge variant="outline" className="border-primary text-primary bg-primary/5">Designer Active</Badge>
+              <Badge variant="outline" className="border-primary text-primary bg-primary/5">Editor Active</Badge>
             </div>
-            <div className="w-full relative shadow-2xl shadow-primary/10">
+            
+            <div className="w-full shadow-2xl shadow-primary/20 rounded-2xl overflow-hidden bg-muted/20 border-4 border-muted">
                <PhotoCardCanvas 
                 config={{
                   ...config,
@@ -401,8 +393,9 @@ export default function TemplateEditorPage() {
                 }} 
               />
             </div>
+            
             <p className="text-center text-xs text-muted-foreground italic">
-              Changes reflect instantly. 4K export available on generation page.
+              Changes reflect instantly in the canvas preview.
             </p>
           </div>
         </div>
