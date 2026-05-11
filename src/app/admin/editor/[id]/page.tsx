@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -119,8 +120,10 @@ export default function TemplateEditorPage() {
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) {
-      if (!user) toast({ title: "Please login to upload", variant: "destructive" });
+    if (!file) return;
+
+    if (!user) {
+      toast({ title: "Please login to upload", variant: "destructive" });
       return;
     }
     
@@ -128,23 +131,31 @@ export default function TemplateEditorPage() {
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     const storageRef = ref(storage, fileName);
     
-    try {
-      const uploadResult = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(uploadResult.ref);
-      handleUpdate("backgroundImageUrl", url);
-      toast({ title: "Background uploaded successfully" });
-    } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: "Please check Storage permissions in Firebase Console.",
+    // Explicitly setting content type metadata for better browser compatibility
+    const metadata = {
+      contentType: file.type,
+    };
+    
+    uploadBytes(storageRef, file, metadata)
+      .then(async (uploadResult) => {
+        const url = await getDownloadURL(uploadResult.ref);
+        handleUpdate("backgroundImageUrl", url);
+        toast({ title: "Background uploaded successfully!" });
+      })
+      .catch((err: any) => {
+        console.error("Upload error:", err);
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: "Check if Firebase Storage is enabled and rules are public during development.",
+        });
+        errorEmitter.emit('permission-error', {
+          message: err.message || "Storage upload failed. Check CORS or Rules."
+        });
+      })
+      .finally(() => {
+        setUploading(false);
       });
-      errorEmitter.emit('permission-error', {
-        message: err.message || "Storage upload failed."
-      });
-    } finally {
-      setUploading(false);
-    }
   };
 
   const handleSave = (status: "draft" | "published") => {
@@ -165,7 +176,7 @@ export default function TemplateEditorPage() {
 
     setDoc(docRef, data, { merge: true })
       .then(() => {
-        toast({ title: "Template saving initiated" });
+        toast({ title: "Template saved successfully!" });
         router.push("/admin/dashboard");
       })
       .catch((serverError) => {
@@ -258,14 +269,17 @@ export default function TemplateEditorPage() {
                     <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-30" />
                   )}
                   {uploading ? (
-                    <Loader2 className="animate-spin text-primary" />
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="animate-spin text-primary" />
+                      <span className="text-[10px] animate-pulse">Uploading...</span>
+                    </div>
                   ) : (
                     <>
                       <Upload className="w-6 h-6 text-muted-foreground mb-1" />
                       <span className="text-xs font-medium">Change background</span>
                     </>
                   )}
-                  <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" disabled={uploading} />
                 </div>
               </div>
             </div>
