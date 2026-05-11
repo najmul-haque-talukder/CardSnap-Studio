@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useImperativeHandle, forwardRef } from "react";
@@ -54,8 +53,9 @@ export const PhotoCardCanvas = forwardRef(({
 }: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
   
-  const [bgImage] = useImage(config.backgroundImageUrl || "https://placehold.co/600x600?text=No+Background", "anonymous");
-  const [userPhoto] = useImage(userPhotoUrl || "", "anonymous");
+  // Use null instead of empty string for useImage
+  const [bgImage] = useImage(config.backgroundImageUrl || "https://placehold.co/600x600?text=Background", "anonymous");
+  const [userPhoto] = useImage(userPhotoUrl || null, "anonymous");
 
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
@@ -91,18 +91,19 @@ export const PhotoCardCanvas = forwardRef(({
   const frameHeight = config.photoConfig.shape === "circle" ? (config.photoConfig.diameter || 150) : (config.photoConfig.height || 150);
 
   const renderTextLayer = (layerName: string, layerConfig: LayerConfig) => {
+    if (!layerConfig) return null;
     return (
       <Text
-        text={layerConfig.text}
-        x={layerConfig.x}
-        y={layerConfig.y}
-        fontSize={layerConfig.fontSize}
-        fontStyle={layerConfig.fontStyle}
-        fill={layerConfig.color}
-        align={layerConfig.align}
+        text={layerConfig.text || ""}
+        x={layerConfig.x || 0}
+        y={layerConfig.y || 0}
+        fontSize={layerConfig.fontSize || 20}
+        fontStyle={layerConfig.fontStyle || "normal"}
+        fill={layerConfig.color || "#000000"}
+        align={layerConfig.align || "center"}
         width={width}
         fontFamily="Bricolage Grotesque"
-        draggable
+        draggable={!!onLayerTransform}
         onDragEnd={(e) => {
           if (onLayerTransform) {
             onLayerTransform(layerName, e.target.x(), e.target.y());
@@ -146,7 +147,7 @@ export const PhotoCardCanvas = forwardRef(({
   };
 
   return (
-    <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-muted/20 rounded-xl shadow-inner border border-border/50">
+    <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-[#1e1e1e] rounded-xl shadow-inner border border-border/50">
       <Stage width={width} height={height} ref={stageRef}>
         <Layer>
           {bgImage && (

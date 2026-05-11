@@ -17,6 +17,8 @@ import { FirestorePermissionError } from "@/firebase/errors";
 
 const PhotoCardCanvas = dynamic(() => import("@/components/canvas/PhotoCardCanvas"), { ssr: false });
 
+const DEFAULT_USER_PLACEHOLDER = "https://picsum.photos/seed/user-placeholder/600/600";
+
 export default function GeneratePage() {
   const { id } = useParams();
   const router = useRouter();
@@ -220,7 +222,7 @@ export default function GeneratePage() {
             <div className="w-full">
               <PhotoCardCanvas 
                 config={canvasConfig} 
-                userPhotoUrl={userPhotoUrl} 
+                userPhotoUrl={userPhotoUrl || DEFAULT_USER_PLACEHOLDER} 
                 userPhotoScale={userPhotoScale}
                 ref={canvasRef} 
               />
@@ -244,11 +246,9 @@ export default function GeneratePage() {
                 </Button>
               </div>
               
-              {userPhotoUrl && (
-                <p className="text-center text-xs text-muted-foreground italic md:block hidden">
-                  Hint: Use the mouse to drag your photo within the frame for the perfect fit.
-                </p>
-              )}
+              <p className="text-center text-xs text-muted-foreground italic md:block hidden">
+                Hint: {userPhotoUrl ? "Use the mouse to drag your photo within the frame." : "Upload your photo to start customizing."}
+              </p>
             </div>
           </div>
         </div>
