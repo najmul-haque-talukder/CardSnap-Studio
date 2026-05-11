@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 interface Template {
   id: string;
@@ -35,7 +37,6 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
 
-  // State for delete confirmation
   const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
 
@@ -53,31 +54,39 @@ export default function AdminDashboard() {
     setConfirmText("");
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (confirmText === "DELETE" && deleteTemplateId) {
-      try {
-        await deleteDoc(doc(db, "templates", deleteTemplateId));
-        toast({ title: "Template deleted successfully" });
-        setDeleteTemplateId(null);
-        setConfirmText("");
-      } catch (error) {
-        toast({ 
-          variant: "destructive", 
-          title: "Delete failed", 
-          description: "Check your internet connection or permissions." 
+      const docRef = doc(db, "templates", deleteTemplateId);
+      deleteDoc(docRef)
+        .catch(async (err) => {
+          const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'delete'
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
-      }
+      
+      toast({ title: "Template deletion initiated" });
+      setDeleteTemplateId(null);
+      setConfirmText("");
     }
   };
 
-  const togglePublish = async (template: Template) => {
+  const togglePublish = (template: Template) => {
     const newStatus = template.status === "published" ? "draft" : "published";
-    try {
-      await updateDoc(doc(db, "templates", template.id), { status: newStatus });
-      toast({ title: `Template marked as ${newStatus}` });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Update failed" });
-    }
+    const docRef = doc(db, "templates", template.id);
+    
+    updateDoc(docRef, { status: newStatus })
+      .catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { status: newStatus }
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+      
+    toast({ title: `Status update initiated: ${newStatus}` });
   };
 
   const handleLogout = () => {
@@ -161,7 +170,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deleteTemplateId} onOpenChange={(open) => !open && setDeleteTemplateId(null)}>
           <AlertDialogContent className="rounded-2xl border-border/50">
             <AlertDialogHeader>
@@ -171,7 +179,7 @@ export default function AdminDashboard() {
               <AlertDialogTitle className="text-2xl font-bold">Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription className="text-base">
                 This action cannot be undone. This will permanently delete the template and all associated data.
-              </娅lertDialogDescription>
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4 space-y-3">
               <p className="text-sm font-medium">Please type <span className="text-destructive font-bold">DELETE</span> to confirm:</p>

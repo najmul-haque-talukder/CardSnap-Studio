@@ -134,21 +134,20 @@ export default function TemplateEditorPage() {
       handleUpdate("backgroundImageUrl", url);
       toast({ title: "Background uploaded successfully" });
     } catch (err: any) {
-      console.error("Upload error:", err);
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Please check if Firebase Storage is enabled and Rules are set to allow uploads.",
+        description: "Please check Storage permissions in Firebase Console.",
       });
       errorEmitter.emit('permission-error', {
-        message: err.message || "Storage upload failed. Ensure 'Storage' is enabled in Firebase Console and rules allow writes."
+        message: err.message || "Storage upload failed."
       });
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSave = async (status: "draft" | "published") => {
+  const handleSave = (status: "draft" | "published") => {
     if (!user) {
       toast({ title: "Please login first", variant: "destructive" });
       return;
@@ -166,7 +165,7 @@ export default function TemplateEditorPage() {
 
     setDoc(docRef, data, { merge: true })
       .then(() => {
-        toast({ title: "Template Saved Successfully" });
+        toast({ title: "Template saving initiated" });
         router.push("/admin/dashboard");
       })
       .catch((serverError) => {
