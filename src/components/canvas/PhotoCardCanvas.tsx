@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useImperativeHandle, forwardRef } from "react";
@@ -59,7 +60,6 @@ export const PhotoCardCanvas = forwardRef(({
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
       if (!stageRef.current) return;
-      // Use image/jpeg with high quality (1.0) for 4K JPG export
       const dataUrl = stageRef.current.toDataURL({ 
         pixelRatio: 4,
         mimeType: 'image/jpeg',

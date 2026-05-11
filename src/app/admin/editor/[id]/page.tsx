@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -93,7 +94,6 @@ export default function TemplateEditorPage() {
           const snapshot = await getDoc(docRef);
           if (snapshot.exists()) {
             const data = snapshot.data();
-            // Deep merge with DEFAULT_CONFIG to ensure new properties exist
             setConfig({
               ...DEFAULT_CONFIG,
               ...data,
@@ -213,7 +213,6 @@ export default function TemplateEditorPage() {
       </header>
 
       <main className="flex-1 flex overflow-hidden">
-        {/* Scrollable Settings Sidebar */}
         <div className="w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 custom-scrollbar shrink-0">
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
@@ -361,7 +360,6 @@ export default function TemplateEditorPage() {
           <div className="h-20" />
         </div>
 
-        {/* Fixed Preview Section */}
         <div className="flex-1 bg-muted/10 flex items-center justify-center p-12 overflow-hidden relative">
           <div className="w-full max-w-[500px] space-y-6">
             <div className="flex items-center justify-between">
