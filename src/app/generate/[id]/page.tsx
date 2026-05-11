@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { ChevronLeft, Download, Camera, Loader2, Sparkles, ZoomIn, ArrowRight } from "lucide-react";
+import { ChevronLeft, Download, Camera, Loader2, Sparkles, ZoomIn, ArrowRight, Settings2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -67,7 +67,6 @@ export default function GeneratePage() {
   const handleDownload = async () => {
     if (canvasRef.current && id) {
       const docRef = doc(db, "templates", id as string);
-      // Increment usage count safely
       updateDoc(docRef, { usageCount: increment(1) })
         .catch(async (err) => {
           const permissionError = new FirestorePermissionError({
@@ -121,12 +120,6 @@ export default function GeneratePage() {
 
       <main className="container mx-auto px-4 py-6 md:py-12">
         <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
-          {/* Mobile Step Indicator */}
-          <div className="flex md:hidden w-full gap-2 mb-4">
-            <div className={`h-1 flex-1 rounded-full ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
-            <div className={`h-1 flex-1 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
-          </div>
-
           {/* Sidebar / Form */}
           <div className={`w-full md:w-[350px] space-y-6 ${step === 2 ? "hidden md:block" : "block"}`}>
             <div className="space-y-4">
@@ -143,7 +136,7 @@ export default function GeneratePage() {
                   ) : (
                     <>
                       <Camera className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground mb-2" />
-                      <span className="text-xs text-muted-foreground">Click to upload photo</span>
+                      <span className="text-xs text-muted-foreground text-center px-4">Click to upload your photo</span>
                     </>
                   )}
                   <input
@@ -154,22 +147,6 @@ export default function GeneratePage() {
                   />
                 </div>
               </div>
-
-              {userPhotoUrl && (
-                <div className="p-4 bg-muted/50 rounded-xl space-y-3 border border-border/50">
-                  <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3" /> Photo Zoom</span>
-                    <span>{Math.round(userPhotoScale * 100)}%</span>
-                  </div>
-                  <Slider 
-                    value={[userPhotoScale]} 
-                    min={0.5} 
-                    max={3} 
-                    step={0.01} 
-                    onValueChange={([val]) => setUserPhotoScale(val)}
-                  />
-                </div>
-              )}
 
               <div className="space-y-3">
                 <div className="space-y-1">
@@ -221,7 +198,7 @@ export default function GeneratePage() {
               Live Preview
             </h2>
             
-            <div className="w-full relative">
+            <div className="w-full relative shadow-2xl rounded-2xl overflow-hidden bg-card border border-border/50">
               <PhotoCardCanvas 
                 config={canvasConfig} 
                 userPhotoUrl={userPhotoUrl || DEFAULT_USER_PLACEHOLDER} 
@@ -230,6 +207,30 @@ export default function GeneratePage() {
               />
             </div>
 
+            {/* Zoom Controls - Visible in Preview Step */}
+            {userPhotoUrl && (
+              <div className="p-4 md:p-5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 shadow-lg space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Settings2 className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground">Adjust Photo Size</span>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-[10px]">{Math.round(userPhotoScale * 100)}%</Badge>
+                </div>
+                <div className="flex items-center gap-4">
+                  <ZoomIn className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <Slider 
+                    value={[userPhotoScale]} 
+                    min={0.5} 
+                    max={3} 
+                    step={0.01} 
+                    onValueChange={([val]) => setUserPhotoScale(val)}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row gap-3">
                 <Button 
@@ -237,7 +238,7 @@ export default function GeneratePage() {
                   className="flex-1 h-12 md:h-14 rounded-xl md:hidden" 
                   onClick={() => setStep(1)}
                 >
-                  <ChevronLeft className="w-4 h-4 mr-2" /> Edit Details
+                  <ChevronLeft className="w-4 h-4 mr-2" /> Back to Edit
                 </Button>
                 <Button 
                   className="flex-1 h-12 md:h-14 rounded-xl text-base md:text-lg font-bold bg-secondary hover:bg-secondary/90 gap-2 shadow-xl shadow-secondary/10"
@@ -248,7 +249,7 @@ export default function GeneratePage() {
                 </Button>
               </div>
               <p className="text-center text-[10px] md:text-xs text-muted-foreground italic">
-                {userPhotoUrl ? "Tip: You can drag your photo in the preview to position it." : "Upload your photo to see the final result."}
+                {userPhotoUrl ? "Tip: Drag the photo and use the slider to position it perfectly." : "Please upload your photo to preview the card."}
               </p>
             </div>
           </div>
