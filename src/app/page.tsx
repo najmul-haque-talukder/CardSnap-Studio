@@ -42,7 +42,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen pb-20 overflow-x-hidden">
+    <div className="min-h-screen pb-10 overflow-x-hidden">
       <header className="relative py-12 md:py-24 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] md:w-[1200px] h-[300px] md:h-[600px] bg-primary/20 blur-[80px] md:blur-[120px] rounded-full -z-10" />
         <div className="container mx-auto px-4 text-center">
@@ -56,7 +56,6 @@ export default function HomePage() {
             Create high-quality 4K photocards for your events, sessions, or professional needs in seconds.
           </p>
 
-          {/* Responsive Category Navigation - Wrapped Pills Style */}
           <div className="w-full flex justify-center">
             <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full max-w-2xl">
               <TabsList className="bg-transparent h-auto p-0 flex flex-wrap justify-center gap-2 md:gap-3">
@@ -151,7 +150,7 @@ export default function HomePage() {
         )}
       </section>
 
-      <footer className="mt-24 md:mt-40 py-10 border-t border-border/30 text-center text-xs md:text-sm text-muted-foreground px-4">
+      <footer className="mt-12 md:mt-20 py-10 border-t border-border/30 text-center text-xs md:text-sm text-muted-foreground px-4">
         <p>&copy; {currentYear ?? '...'} CardSnap Studio. Engineered for high-quality professional photocards.</p>
       </footer>
     </div>

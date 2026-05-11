@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const metadata: Metadata = {
-  title: 'CardSnap Studio - Premium Photocard Generator',
+  title: 'CardSnap Studio - by CPI HTC',
   description: 'Create professional photocards instantly with our 4K generator.',
 };
 
