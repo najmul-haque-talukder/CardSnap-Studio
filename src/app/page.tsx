@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -57,22 +56,20 @@ export default function HomePage() {
             Create high-quality 4K photocards for your events, sessions, or professional needs in seconds.
           </p>
 
-          {/* Responsive Category Navigation */}
-          <div className="w-full flex justify-center overflow-hidden">
+          {/* Responsive Category Navigation - Wrapped Pills Style */}
+          <div className="w-full flex justify-center">
             <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full max-w-2xl">
-              <div className="flex md:justify-center overflow-x-auto no-scrollbar pb-2 px-4">
-                <TabsList className="bg-muted/40 rounded-full p-1 border border-border/50 flex h-auto min-w-max md:min-w-0">
-                  {CATEGORIES.map(cat => (
-                    <TabsTrigger 
-                      key={cat} 
-                      value={cat} 
-                      className="rounded-full px-5 md:px-8 py-2 md:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm transition-all"
-                    >
-                      {cat}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
+              <TabsList className="bg-transparent h-auto p-0 flex flex-wrap justify-center gap-2 md:gap-3">
+                {CATEGORIES.map(cat => (
+                  <TabsTrigger 
+                    key={cat} 
+                    value={cat} 
+                    className="rounded-full px-4 md:px-8 py-2 md:py-2.5 bg-muted/40 border border-border/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm transition-all hover:bg-muted/60"
+                  >
+                    {cat}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
             </Tabs>
           </div>
         </div>
@@ -100,7 +97,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
-                <Card className="group relative overflow-hidden border-border/50 bg-card transition-all duration-500 hover:border-primary/40 hover:scale-[1.03] hover:shadow-2xl hover:shadow-primary/10">
+                <Card className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:border-primary/40 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10">
                   <div className="aspect-[4/3] relative">
                     {template.backgroundImageUrl ? (
                       <Image
@@ -108,6 +105,7 @@ export default function HomePage() {
                         alt={template.title}
                         fill
                         className="object-cover"
+                        unoptimized={template.backgroundImageUrl.includes('ibb.co')}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted/30">
@@ -156,16 +154,6 @@ export default function HomePage() {
       <footer className="mt-24 md:mt-40 py-10 border-t border-border/30 text-center text-xs md:text-sm text-muted-foreground px-4">
         <p>&copy; {currentYear ?? '...'} CardSnap Studio. Engineered for high-quality professional photocards.</p>
       </footer>
-
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </div>
   );
 }
