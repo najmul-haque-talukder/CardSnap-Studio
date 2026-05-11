@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -75,7 +74,8 @@ export default function GeneratePage() {
           errorEmitter.emit('permission-error', permissionError);
         });
       
-      canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.png`);
+      // Export as high quality JPG
+      canvasRef.current.export4K(`photocard_${formData.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.jpg`);
       toast({ title: "Card generated!", description: "Check your downloads folder." });
     }
   };
@@ -210,7 +210,7 @@ export default function GeneratePage() {
             </Button>
           </div>
 
-          {/* Step 2: Preview & Download (Centered and sized to match image) */}
+          {/* Step 2: Preview & Download */}
           <div className={`flex-1 w-full max-w-[500px] space-y-6 ${step === 1 ? "hidden md:block" : "block"}`}>
             <h2 className="text-xl font-bold hidden md:flex items-center gap-2">
               <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">2</span>
@@ -240,7 +240,7 @@ export default function GeneratePage() {
                   onClick={handleDownload}
                   disabled={!userPhotoUrl || !formData.name}
                 >
-                  <Download className="w-5 h-5" /> Download 4K PNG
+                  <Download className="w-5 h-5" /> Download 4K JPG
                 </Button>
               </div>
               

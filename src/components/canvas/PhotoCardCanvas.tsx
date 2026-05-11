@@ -59,7 +59,12 @@ export const PhotoCardCanvas = forwardRef(({
   useImperativeHandle(ref, () => ({
     export4K: (filename: string) => {
       if (!stageRef.current) return;
-      const dataUrl = stageRef.current.toDataURL({ pixelRatio: 4 });
+      // Use image/jpeg with high quality (1.0) for 4K JPG export
+      const dataUrl = stageRef.current.toDataURL({ 
+        pixelRatio: 4,
+        mimeType: 'image/jpeg',
+        quality: 1.0
+      });
       const link = document.createElement("a");
       link.download = filename;
       link.href = dataUrl;
