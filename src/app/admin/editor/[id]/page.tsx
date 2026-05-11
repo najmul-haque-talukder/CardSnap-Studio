@@ -144,7 +144,7 @@ export default function TemplateEditorPage() {
         toast({ title: "Background uploaded successfully!" });
       })
       .catch((err: any) => {
-        toast({ variant: "destructive", title: "Upload failed", description: "Check Storage Rules in Console." });
+        toast({ variant: "destructive", title: "Upload failed", description: "Storage rules might be restricting this." });
       })
       .finally(() => {
         setUploading(false);
@@ -200,7 +200,7 @@ export default function TemplateEditorPage() {
           </Button>
           <div>
             <h1 className="font-bold text-xl leading-tight">{id === "new" ? "New Template" : config.title}</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Editor Mode</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Design Mode</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -215,12 +215,12 @@ export default function TemplateEditorPage() {
       </header>
 
       <main className="flex-1 flex overflow-hidden">
-        {/* Scrollable Sidebar */}
-        <div className="w-[450px] overflow-y-auto bg-card/30 border-r border-border/50 p-6 space-y-8 custom-scrollbar shrink-0 h-full">
+        {/* Left: Scrollable Sidebar */}
+        <div className="w-[450px] overflow-y-auto bg-card/30 border-r border-border/50 p-6 space-y-8 custom-scrollbar h-full shrink-0">
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-bold">Template Basics</h2>
+              <h2 className="text-lg font-bold">Base Properties</h2>
             </div>
             <div className="grid gap-4">
               <div className="space-y-2">
@@ -228,7 +228,7 @@ export default function TemplateEditorPage() {
                 <Input value={config.title} onChange={(e) => handleUpdate("title", e.target.value)} className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label>Subtitle (Public)</Label>
+                <Label>Public Subtitle</Label>
                 <Input value={config.subtitle} onChange={(e) => handleUpdate("subtitle", e.target.value)} className="rounded-xl" />
               </div>
               
@@ -250,13 +250,13 @@ export default function TemplateEditorPage() {
                   <Label>Featured</Label>
                   <div className="flex items-center space-x-2 h-10 px-3 border rounded-xl bg-muted/20">
                     <Switch checked={config.featured} onCheckedChange={(val) => handleUpdate("featured", val)} />
-                    <span className="text-xs font-medium">Highlight</span>
+                    <span className="text-xs font-medium">Spotlight</span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Background Image</Label>
+                <Label>Background Layer</Label>
                 <div className="relative h-40 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
                   {config.backgroundImageUrl ? (
                     <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-60" />
@@ -268,7 +268,7 @@ export default function TemplateEditorPage() {
                   ) : (
                     <div className="flex flex-col items-center gap-2 z-10 p-4">
                       <Upload className="w-8 h-8 text-muted-foreground" />
-                      <span className="text-xs font-medium">Upload Background</span>
+                      <span className="text-xs font-medium">Upload Card Image</span>
                     </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading} />
@@ -282,16 +282,16 @@ export default function TemplateEditorPage() {
               <TabsTrigger value="photo" className="rounded-lg"><ImageIcon className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="name" className="rounded-lg"><Type className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="designation" className="rounded-lg text-xs">Job</TabsTrigger>
-              <TabsTrigger value="session" className="rounded-lg text-xs">Sess</TabsTrigger>
+              <TabsTrigger value="session" className="rounded-lg text-xs">Batch</TabsTrigger>
             </TabsList>
 
             <TabsContent value="photo" className="mt-6 space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Target className="w-5 h-5 text-primary" />
-                <h3 className="font-bold">Photo Layer</h3>
+                <h3 className="font-bold">Photo Configuration</h3>
               </div>
               <div className="space-y-4">
-                <Label>Shape Type</Label>
+                <Label>Frame Shape</Label>
                 <RadioGroup value={config.photoConfig.shape} onValueChange={(val) => handleUpdate("photoConfig.shape", val)} className="flex gap-4">
                   <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-lg flex-1 border border-border/50">
                     <RadioGroupItem value="circle" id="circle" />
@@ -305,21 +305,21 @@ export default function TemplateEditorPage() {
 
                 <div className="grid gap-4">
                   {config.photoConfig.shape === "circle" ? (
-                    <SliderInput label="Diameter" value={config.photoConfig.diameter || 180} min={50} max={400} onChange={(val) => handleUpdate("photoConfig.diameter", val)} />
+                    <SliderInput label="Frame Diameter" value={config.photoConfig.diameter || 180} min={50} max={400} onChange={(val) => handleUpdate("photoConfig.diameter", val)} />
                   ) : (
                     <>
-                      <SliderInput label="Width" value={config.photoConfig.width || 180} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.width", val)} />
-                      <SliderInput label="Height" value={config.photoConfig.height || 180} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.height", val)} />
-                      <SliderInput label="Border Radius" value={config.photoConfig.borderRadius || 20} min={0} max={225} onChange={(val) => handleUpdate("photoConfig.borderRadius", val)} />
+                      <SliderInput label="Frame Width" value={config.photoConfig.width || 180} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.width", val)} />
+                      <SliderInput label="Frame Height" value={config.photoConfig.height || 180} min={50} max={450} onChange={(val) => handleUpdate("photoConfig.height", val)} />
+                      <SliderInput label="Corner Radius" value={config.photoConfig.borderRadius || 20} min={0} max={225} onChange={(val) => handleUpdate("photoConfig.borderRadius", val)} />
                     </>
                   )}
-                  <SliderInput label="X Position" value={config.photoConfig.x} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.x", val)} />
-                  <SliderInput label="Y Position" value={config.photoConfig.y} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.y", val)} />
+                  <SliderInput label="Horizontal (X)" value={config.photoConfig.x} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.x", val)} />
+                  <SliderInput label="Vertical (Y)" value={config.photoConfig.y} min={0} max={500} onChange={(val) => handleUpdate("photoConfig.y", val)} />
                   
                   <div className="pt-4 border-t border-border/50">
                     <div className="flex items-center gap-2 mb-4">
                       <Palette className="w-4 h-4 text-primary" />
-                      <h4 className="text-sm font-bold">Border Styling</h4>
+                      <h4 className="text-sm font-bold">Border Controls</h4>
                     </div>
                     <SliderInput label="Border Width" value={config.photoConfig.borderWidth || 0} min={0} max={20} onChange={(val) => handleUpdate("photoConfig.borderWidth", val)} />
                     <ColorPickerInput label="Border Color" value={config.photoConfig.borderColor || "#ffffff"} onChange={(val) => handleUpdate("photoConfig.borderColor", val)} />
@@ -335,8 +335,8 @@ export default function TemplateEditorPage() {
                   <h3 className="font-bold capitalize">{layer} Layer</h3>
                 </div>
                 <div className="grid gap-4">
-                  <SliderInput label="X Position" value={config[`${layer}Config`].x} min={-250} max={500} onChange={(val) => handleUpdate(`${layer}Config.x`, val)} />
-                  <SliderInput label="Y Position" value={config[`${layer}Config`].y} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.y`, val)} />
+                  <SliderInput label="Horizontal (X)" value={config[`${layer}Config`].x} min={-250} max={500} onChange={(val) => handleUpdate(`${layer}Config.x`, val)} />
+                  <SliderInput label="Vertical (Y)" value={config[`${layer}Config`].y} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.y`, val)} />
                   <SliderInput label="Font Size" value={config[`${layer}Config`].fontSize} min={8} max={72} onChange={(val) => handleUpdate(`${layer}Config.fontSize`, val)} />
                   <div className="space-y-2">
                     <Label>Font Style</Label>
@@ -363,13 +363,13 @@ export default function TemplateEditorPage() {
           <div className="h-24" />
         </div>
 
-        {/* Fixed Preview Section */}
+        {/* Right: Fixed Preview Section */}
         <div className="flex-1 bg-muted/5 flex items-center justify-center p-12 overflow-hidden relative h-full">
           <div className="w-full max-w-[500px] space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Editor Preview</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview Canvas</h3>
               </div>
               <Badge variant="outline" className="border-primary text-primary bg-primary/5">Interactive</Badge>
             </div>
@@ -378,9 +378,9 @@ export default function TemplateEditorPage() {
                <PhotoCardCanvas 
                 config={{
                   ...config,
-                  nameConfig: { ...config.nameConfig, text: "Admin Preview Name" },
-                  designationConfig: { ...config.designationConfig, text: "Designation Label" },
-                  sessionConfig: { ...config.sessionConfig, text: "2024 - 25 Batch" }
+                  nameConfig: { ...config.nameConfig, text: "Preview Full Name" },
+                  designationConfig: { ...config.designationConfig, text: "Job Designation" },
+                  sessionConfig: { ...config.sessionConfig, text: "2024 - 2025" }
                 }} 
                 userPhotoUrl="https://picsum.photos/seed/admin-placeholder/600/600"
                 onLayerTransform={(layerName, x, y) => {
@@ -391,7 +391,7 @@ export default function TemplateEditorPage() {
             </div>
             <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground italic">
               <MousePointer2 className="w-3 h-3" />
-              Tip: Drag text or photo directly in the preview to position them.
+              Tip: Drag elements directly in the preview to position them.
             </div>
           </div>
         </div>
