@@ -19,7 +19,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog";
-import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, LayoutDashboard, LogOut, Loader2, AlertTriangle, ImageIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -135,11 +135,17 @@ export default function AdminDashboard() {
             {templates?.map(template => (
               <Card key={template.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-all duration-300 rounded-2xl group">
                 <div className="aspect-video relative bg-muted overflow-hidden">
-                  <img 
-                    src={template.backgroundImageUrl} 
-                    alt={template.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                  />
+                  {template.backgroundImageUrl ? (
+                    <img 
+                      src={template.backgroundImageUrl} 
+                      alt={template.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
+                    </div>
+                  )}
                   <div className="absolute top-3 left-3">
                     <Badge variant={template.status === "published" ? "default" : "secondary"} className="shadow-lg backdrop-blur-sm bg-opacity-80">
                       {template.status === "published" ? "Published" : "Draft"}

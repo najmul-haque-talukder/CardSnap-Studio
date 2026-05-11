@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { collection, query, where } from "firebase/firestore";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, ArrowRight, Loader2, Star } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2, Star, ImageIcon } from "lucide-react";
 import Image from "next/image";
 
 interface Template {
@@ -94,12 +94,18 @@ export default function HomePage() {
               <Link key={template.id} href={`/generate/${template.id}`}>
                 <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
                   <div className="aspect-[4/3] relative">
-                    <Image
-                      src={template.backgroundImageUrl}
-                      alt={template.title}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                    {template.backgroundImageUrl ? (
+                      <Image
+                        src={template.backgroundImageUrl}
+                        alt={template.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <ImageIcon className="w-12 h-12 text-muted-foreground/30" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     {template.featured && (
                       <div className="absolute top-4 right-4 z-10">
