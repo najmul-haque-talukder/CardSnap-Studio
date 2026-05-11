@@ -343,7 +343,7 @@ export default function TemplateEditorPage() {
                     <select value={config[`${layer}Config`].fontStyle} onChange={(e) => handleUpdate(`${layer}Config.fontStyle`, e.target.value)} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm">
                       <option value="normal">Normal</option>
                       <option value="bold">Bold</option>
-                      <option value="italic">Italic</option>
+                      <option value="italic">Inter</option>
                       <option value="bold italic">Bold Italic</option>
                     </select>
                   </div>
@@ -379,8 +379,8 @@ export default function TemplateEditorPage() {
                 config={{
                   ...config,
                   nameConfig: { ...config.nameConfig, text: "Preview Full Name" },
-                  designationConfig: { ...config.designationConfig, text: "Job Designation" },
-                  sessionConfig: { ...config.sessionConfig, text: "2024 - 2025" }
+                  designationConfig: { ...config.designationConfig, text: "Department/Designation" },
+                  sessionConfig: { ...config.sessionConfig, text: "Session 2021-22" }
                 }} 
                 userPhotoUrl="https://picsum.photos/seed/admin-placeholder/600/600"
                 onLayerTransform={(layerName, x, y) => {

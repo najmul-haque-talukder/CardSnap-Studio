@@ -98,8 +98,8 @@ export default function GeneratePage() {
   const canvasConfig = {
     ...template,
     nameConfig: { ...template.nameConfig, text: formData.name || "Your Name" },
-    designationConfig: { ...template.designationConfig, text: formData.designation || "Designation" },
-    sessionConfig: { ...template.sessionConfig, text: formData.session || "2023-24" }
+    designationConfig: { ...template.designationConfig, text: formData.designation || "Department/Designation" },
+    sessionConfig: { ...template.sessionConfig, text: formData.session || "Session 2021-22" }
   };
 
   return (
@@ -186,7 +186,7 @@ export default function GeneratePage() {
                   id="designation"
                   value={formData.designation}
                   onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                  placeholder="Software Engineer"
+                  placeholder="Department/Designation"
                   className="rounded-xl h-12"
                 />
               </div>
@@ -197,7 +197,7 @@ export default function GeneratePage() {
                   id="session"
                   value={formData.session}
                   onChange={(e) => setFormData({ ...formData, session: e.target.value })}
-                  placeholder="2024-25"
+                  placeholder="Session 2021-22"
                   className="rounded-xl h-12"
                 />
               </div>

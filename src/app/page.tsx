@@ -75,9 +75,11 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold">
             {activeCategory === "All" ? "Latest Templates" : `${activeCategory} Templates`}
           </h2>
-          <Link href="/admin/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            Admin Access
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/admin/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              Admin Access
+            </Link>
+          </div>
         </div>
 
         {loading ? (
@@ -92,14 +94,14 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
-                <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+                <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(139,92,246,0.15)]">
                   <div className="aspect-[4/3] relative">
                     {template.backgroundImageUrl ? (
                       <Image
                         src={template.backgroundImageUrl}
                         alt={template.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted">
