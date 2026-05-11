@@ -4,6 +4,16 @@ import React, { useRef, useImperativeHandle, forwardRef } from "react";
 import { Stage, Layer, Image as KonvaImage, Text, Group } from "react-konva";
 import useImage from "use-image";
 
+interface LayerConfig {
+  text: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  fontStyle: string;
+  color: string;
+  align: "left" | "center" | "right";
+}
+
 interface TemplateConfig {
   backgroundImageUrl?: string;
   photoConfig: {
@@ -15,33 +25,9 @@ interface TemplateConfig {
     x: number;
     y: number;
   };
-  nameConfig: {
-    text: string;
-    x: number;
-    y: number;
-    fontSize: number;
-    fontStyle: string;
-    color: string;
-    align: "left" | "center" | "right";
-  };
-  designationConfig: {
-    text: string;
-    x: number;
-    y: number;
-    fontSize: number;
-    fontStyle: string;
-    color: string;
-    align: "left" | "center" | "right";
-  };
-  sessionConfig: {
-    text: string;
-    x: number;
-    y: number;
-    fontSize: number;
-    fontStyle: string;
-    color: string;
-    align: "left" | "center" | "right";
-  };
+  nameConfig: LayerConfig;
+  designationConfig: LayerConfig;
+  sessionConfig: LayerConfig;
 }
 
 interface PhotoCardCanvasProps {
@@ -51,6 +37,7 @@ interface PhotoCardCanvasProps {
   width?: number;
   height?: number;
   onUserPhotoTransform?: (x: number, y: number) => void;
+  onLayerTransform?: (layer: string, x: number, y: number) => void;
 }
 
 export const PhotoCardCanvas = forwardRef(({ 
@@ -59,7 +46,8 @@ export const PhotoCardCanvas = forwardRef(({
   userPhotoScale = 1,
   width = 500, 
   height = 500,
-  onUserPhotoTransform
+  onUserPhotoTransform,
+  onLayerTransform
 }: PhotoCardCanvasProps, ref) => {
   const stageRef = useRef<any>(null);
   
@@ -95,8 +83,30 @@ export const PhotoCardCanvas = forwardRef(({
   const frameWidth = config.photoConfig.shape === "circle" ? (config.photoConfig.diameter || 150) : (config.photoConfig.width || 150);
   const frameHeight = config.photoConfig.shape === "circle" ? (config.photoConfig.diameter || 150) : (config.photoConfig.height || 150);
 
+  const renderTextLayer = (layerName: string, layerConfig: LayerConfig) => {
+    return (
+      <Text
+        text={layerConfig.text}
+        x={layerConfig.x}
+        y={layerConfig.y}
+        fontSize={layerConfig.fontSize}
+        fontStyle={layerConfig.fontStyle}
+        fill={layerConfig.color}
+        align={layerConfig.align}
+        width={width}
+        fontFamily="Bricolage Grotesque"
+        draggable
+        onDragEnd={(e) => {
+          if (onLayerTransform) {
+            onLayerTransform(layerName, e.target.x(), e.target.y());
+          }
+        }}
+      />
+    );
+  };
+
   return (
-    <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-muted/20">
+    <div className="relative aspect-square w-full max-w-[500px] mx-auto overflow-hidden bg-muted/20 rounded-xl shadow-inner border border-border/50">
       <Stage width={width} height={height} ref={stageRef}>
         <Layer>
           {bgImage && (
@@ -131,41 +141,9 @@ export const PhotoCardCanvas = forwardRef(({
             )}
           </Group>
 
-          <Text
-            text={config.nameConfig.text}
-            x={config.nameConfig.x}
-            y={config.nameConfig.y}
-            fontSize={config.nameConfig.fontSize}
-            fontStyle={config.nameConfig.fontStyle}
-            fill={config.nameConfig.color}
-            align={config.nameConfig.align}
-            width={width}
-            fontFamily="Bricolage Grotesque"
-          />
-
-          <Text
-            text={config.designationConfig.text}
-            x={config.designationConfig.x}
-            y={config.designationConfig.y}
-            fontSize={config.designationConfig.fontSize}
-            fontStyle={config.designationConfig.fontStyle}
-            fill={config.designationConfig.color}
-            align={config.designationConfig.align}
-            width={width}
-            fontFamily="Bricolage Grotesque"
-          />
-
-          <Text
-            text={config.sessionConfig.text}
-            x={config.sessionConfig.x}
-            y={config.sessionConfig.y}
-            fontSize={config.sessionConfig.fontSize}
-            fontStyle={config.sessionConfig.fontStyle}
-            fill={config.sessionConfig.color}
-            align={config.sessionConfig.align}
-            width={width}
-            fontFamily="Bricolage Grotesque"
-          />
+          {renderTextLayer("nameConfig", config.nameConfig)}
+          {renderTextLayer("designationConfig", config.designationConfig)}
+          {renderTextLayer("sessionConfig", config.sessionConfig)}
         </Layer>
       </Stage>
     </div>

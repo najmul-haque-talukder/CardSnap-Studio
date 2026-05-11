@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target } from "lucide-react";
+import { ChevronLeft, Save, Upload, Loader2, Sparkles, Image as ImageIcon, Type, Target, MousePointer2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -313,7 +313,7 @@ export default function TemplateEditorPage() {
                   <h3 className="font-bold capitalize">{layer} Layer</h3>
                 </div>
                 <div className="grid gap-4">
-                  <SliderInput label="X Position" value={config[`${layer}Config`].x} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.x`, val)} />
+                  <SliderInput label="X Position" value={config[`${layer}Config`].x} min={-250} max={500} onChange={(val) => handleUpdate(`${layer}Config.x`, val)} />
                   <SliderInput label="Y Position" value={config[`${layer}Config`].y} min={0} max={500} onChange={(val) => handleUpdate(`${layer}Config.y`, val)} />
                   <SliderInput label="Font Size" value={config[`${layer}Config`].fontSize} min={8} max={72} onChange={(val) => handleUpdate(`${layer}Config.fontSize`, val)} />
                   <div className="space-y-2">
@@ -361,11 +361,16 @@ export default function TemplateEditorPage() {
                   sessionConfig: { ...config.sessionConfig, text: "2024 - Session" }
                 }} 
                 userPhotoUrl="https://picsum.photos/seed/user-placeholder/600/600"
+                onLayerTransform={(layerName, x, y) => {
+                  handleUpdate(`${layerName}.x`, x);
+                  handleUpdate(`${layerName}.y`, y);
+                }}
               />
             </div>
-            <p className="text-center text-xs text-muted-foreground italic">
-              Changes reflect instantly. Admin preview uses a sample user photo.
-            </p>
+            <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground italic">
+              <MousePointer2 className="w-3 h-3" />
+              Tip: You can drag all layers (photo and text) directly in the preview.
+            </div>
           </div>
         </div>
       </main>
