@@ -57,6 +57,7 @@ export default function HomePage() {
             Create high-quality 4K photocards for your events, sessions, or professional needs in seconds.
           </p>
 
+          {/* Responsive Category Navigation */}
           <div className="w-full flex justify-center overflow-hidden">
             <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full max-w-2xl">
               <div className="flex md:justify-center overflow-x-auto no-scrollbar pb-2 px-4">
@@ -100,13 +101,13 @@ export default function HomePage() {
             {templates.map(template => (
               <Link key={template.id} href={`/generate/${template.id}`}>
                 <Card className="group relative overflow-hidden border-border/50 bg-card transition-all duration-500 hover:border-primary/40 hover:scale-[1.03] hover:shadow-2xl hover:shadow-primary/10">
-                  <div className="aspect-[4/3] relative overflow-hidden">
+                  <div className="aspect-[4/3] relative">
                     {template.backgroundImageUrl ? (
                       <Image
                         src={template.backgroundImageUrl}
                         alt={template.title}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted/30">

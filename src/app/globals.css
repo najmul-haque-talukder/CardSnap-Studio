@@ -39,3 +39,13 @@
     @apply h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary;
   }
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
