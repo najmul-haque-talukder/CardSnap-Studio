@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -120,7 +119,10 @@ export default function TemplateEditorPage() {
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) {
+      if (!user) toast({ title: "Please login to upload", variant: "destructive" });
+      return;
+    }
     
     setUploading(true);
     const fileName = `backgrounds/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
@@ -133,6 +135,11 @@ export default function TemplateEditorPage() {
       toast({ title: "Background uploaded successfully" });
     } catch (err: any) {
       console.error("Upload error:", err);
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: "Please check if Firebase Storage is enabled and Rules are set to allow uploads.",
+      });
       errorEmitter.emit('permission-error', {
         message: err.message || "Storage upload failed. Ensure 'Storage' is enabled in Firebase Console and rules allow writes."
       });
