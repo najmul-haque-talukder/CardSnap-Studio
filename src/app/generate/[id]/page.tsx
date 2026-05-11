@@ -71,7 +71,8 @@ export default function GeneratePage() {
         .catch(async (err) => {
           const permissionError = new FirestorePermissionError({
             path: docRef.path,
-            operation: 'update'
+            operation: 'update',
+            requestResourceData: { usageCount: 1 } // Context for the permission listener
           });
           errorEmitter.emit('permission-error', permissionError);
         });

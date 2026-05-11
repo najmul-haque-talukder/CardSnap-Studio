@@ -225,11 +225,19 @@ export default function TemplateEditorPage() {
             <div className="grid gap-4">
               <div className="space-y-2">
                 <Label>Admin Title</Label>
-                <Input value={config.title} onChange={(e) => handleUpdate("title", e.target.value)} className="rounded-xl" />
+                <input 
+                  value={config.title} 
+                  onChange={(e) => handleUpdate("title", e.target.value)} 
+                  className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
+                />
               </div>
               <div className="space-y-2">
                 <Label>Public Subtitle</Label>
-                <Input value={config.subtitle} onChange={(e) => handleUpdate("subtitle", e.target.value)} className="rounded-xl" />
+                <input 
+                  value={config.subtitle} 
+                  onChange={(e) => handleUpdate("subtitle", e.target.value)} 
+                  className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
