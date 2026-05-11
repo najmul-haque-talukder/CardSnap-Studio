@@ -146,7 +146,7 @@ export default function TemplateEditorPage() {
         toast({
           variant: "destructive",
           title: "Upload Failed",
-          description: err.message || "Could not upload image.",
+          description: "Could not upload image. Check your internet or Firebase Storage rules.",
         });
         errorEmitter.emit('permission-error', {
           message: err.message || "Storage upload failed. Check Security Rules."
@@ -196,8 +196,8 @@ export default function TemplateEditorPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-border/50 bg-card p-4 flex items-center justify-between sticky top-0 z-50">
+    <div className="min-h-screen flex flex-col overflow-hidden">
+      <header className="border-b border-border/50 bg-card p-4 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/admin/dashboard")}>
             <ChevronLeft />
@@ -219,7 +219,8 @@ export default function TemplateEditorPage() {
       </header>
 
       <main className="flex-1 flex flex-col md:flex-row h-[calc(100vh-73px)] overflow-hidden">
-        <div className="w-full md:w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8">
+        {/* Scrollable Sidebar */}
+        <div className="w-full md:w-[450px] overflow-y-auto bg-background/50 border-r border-border/50 p-6 space-y-8 custom-scrollbar">
           <section className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -263,23 +264,24 @@ export default function TemplateEditorPage() {
 
               <div className="space-y-2">
                 <Label>Background Image</Label>
-                <div className="relative h-24 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group">
+                <div className="relative h-32 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center bg-muted/20 overflow-hidden group transition-all hover:bg-muted/30">
                   {config.backgroundImageUrl ? (
-                    <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <img src={config.backgroundImageUrl} alt="BG" className="absolute inset-0 w-full h-full object-cover opacity-40" />
                   ) : (
                     <div className="absolute inset-0 bg-primary/5 flex items-center justify-center">
-                      <ImageIcon className="w-8 h-8 text-primary/20" />
+                      <ImageIcon className="w-10 h-10 text-primary/20" />
                     </div>
                   )}
                   {uploading ? (
                     <div className="flex flex-col items-center gap-2 z-10">
-                      <Loader2 className="animate-spin text-primary" />
-                      <span className="text-[10px] animate-pulse">Uploading...</span>
+                      <Loader2 className="animate-spin text-primary w-8 h-8" />
+                      <span className="text-xs animate-pulse font-medium">Uploading to Firebase...</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-1 z-10">
-                      <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-xs font-medium">Click to upload background</span>
+                    <div className="flex flex-col items-center gap-2 z-10 p-4 text-center">
+                      <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-sm font-medium">Click to upload background</span>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Supports PNG, JPG, WEBP</p>
                     </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleBgUpload} className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" disabled={uploading} />
@@ -289,7 +291,7 @@ export default function TemplateEditorPage() {
           </section>
 
           <Tabs defaultValue="photo" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full h-12 rounded-xl bg-muted/50 p-1">
+            <TabsList className="grid grid-cols-4 w-full h-12 rounded-xl bg-muted/50 p-1 sticky top-0 z-10 backdrop-blur-sm">
               <TabsTrigger value="photo" className="rounded-lg"><ImageIcon className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="name" className="rounded-lg"><Type className="w-4 h-4" /></TabsTrigger>
               <TabsTrigger value="designation" className="rounded-lg text-xs">Job</TabsTrigger>
@@ -376,25 +378,51 @@ export default function TemplateEditorPage() {
               </TabsContent>
             ))}
           </Tabs>
+          <div className="h-20" /> {/* Spacer for bottom scroll */}
         </div>
 
-        <div className="flex-1 bg-muted/10 flex items-center justify-center p-8 overflow-auto">
+        {/* Fixed Preview Section */}
+        <div className="flex-1 bg-muted/10 flex items-center justify-center p-4 md:p-8 overflow-hidden">
           <div className="space-y-6 w-full max-w-[500px]">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</h3>
-              <Badge variant="outline" className="border-primary text-primary">Designer Active</Badge>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</h3>
+              </div>
+              <Badge variant="outline" className="border-primary text-primary bg-primary/5">Designer Active</Badge>
             </div>
-            <PhotoCardCanvas 
-              config={{
-                ...config,
-                nameConfig: { ...config.nameConfig, text: "Preview Name" },
-                designationConfig: { ...config.designationConfig, text: "Designation Label" },
-                sessionConfig: { ...config.sessionConfig, text: "2024 - Session" }
-              }} 
-            />
+            <div className="w-full relative shadow-2xl shadow-primary/10">
+               <PhotoCardCanvas 
+                config={{
+                  ...config,
+                  nameConfig: { ...config.nameConfig, text: "Preview Name" },
+                  designationConfig: { ...config.designationConfig, text: "Designation Label" },
+                  sessionConfig: { ...config.sessionConfig, text: "2024 - Session" }
+                }} 
+              />
+            </div>
+            <p className="text-center text-xs text-muted-foreground italic">
+              Changes reflect instantly. 4K export available on generation page.
+            </p>
           </div>
         </div>
       </main>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: hsl(var(--muted));
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: hsl(var(--primary) / 0.5);
+        }
+      `}</style>
     </div>
   );
 }
